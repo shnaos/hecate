@@ -4,6 +4,8 @@ const h = React.createElement;
 export function PopupShell() {
   const [walletState, setWalletState] = React.useState("empty");
   const [walletOrigin, setWalletOrigin] = React.useState(null);
+  const walletReady = walletState !== "empty";
+  const nextStepReady = walletState === "unlocked";
 
   const walletCopyByState = {
     empty: {
@@ -39,6 +41,36 @@ export function PopupShell() {
       : walletOrigin === "import"
         ? "Imported into Hecate"
         : "Not set";
+  const statusItems = [
+    {
+      label: "Extension",
+      state: "Ready",
+      tone: "ready",
+      detail: "Popup shell is loading in Chrome and ready for the MVP flow.",
+    },
+    {
+      label: "Wallet",
+      state: walletReady ? walletCopy.badge : "Setup required",
+      tone: walletReady ? "ready" : "pending",
+      detail: walletReady
+        ? `Wallet path is present in the popup. Current mode: ${walletCopy.badge.toLowerCase()}.`
+        : "Create or import a wallet before the MVP can advance to status and review work.",
+    },
+    {
+      label: "Route probing",
+      state: "Not ready yet",
+      tone: "pending",
+      detail: "Reserved for the next probing step. No route evaluation logic is active yet.",
+    },
+    {
+      label: "Next step",
+      state: nextStepReady ? "Ready for status and review work" : "Blocked on wallet unlock",
+      tone: nextStepReady ? "ready" : "pending",
+      detail: nextStepReady
+        ? "The MVP is ready to support the next UI step cleanly."
+        : "Unlock the wallet to make the next MVP step feel coherent in the demo.",
+    },
+  ];
 
   return h("main", { className: "popup" }, [
     h("section", { className: "hero", key: "hero" }, [
@@ -52,6 +84,35 @@ export function PopupShell() {
         "p",
         { className: "tagline", key: "tagline" },
         "A privacy-first wallet concept that reviews intent, explains the route, and only executes after an explicit user decision.",
+      ),
+    ]),
+    h("section", { className: "panel status-panel", key: "status" }, [
+      h("p", { className: "panel-label", key: "label" }, "MVP status"),
+      h("p", { className: "status-intro", key: "intro" }, [
+        "A quick readiness check for the current popup state. ",
+        nextStepReady
+          ? "The MVP is ready to move into the next UI step."
+          : "One wallet step is still needed before the next MVP screen feels ready.",
+      ]),
+      h(
+        "div",
+        { className: "status-grid", key: "grid" },
+        statusItems.map((item) =>
+          h("article", { className: "status-card", key: item.label }, [
+            h("div", { className: "status-card-header", key: "header" }, [
+              h("p", { className: "status-card-label", key: "label" }, item.label),
+              h(
+                "p",
+                {
+                  className: `status-chip status-chip-${item.tone}`,
+                  key: "chip",
+                },
+                item.state,
+              ),
+            ]),
+            h("p", { className: "status-card-detail", key: "detail" }, item.detail),
+          ]),
+        ),
       ),
     ]),
     h("section", { className: "panel wallet-panel", key: "wallet" }, [
@@ -192,7 +253,7 @@ export function PopupShell() {
       h("p", { className: "panel-label", key: "label" }, "Coming next"),
       h("ul", { className: "status-list", key: "list" }, [
         h("li", { key: "wallet" }, "Wallet create, import, and unlock now feel real in the popup"),
-        h("li", { key: "status" }, "Status and review screens come next"),
+        h("li", { key: "status" }, "Status is now visible before review inputs arrive"),
         h(
           "li",
           { key: "decision" },

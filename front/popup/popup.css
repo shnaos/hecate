@@ -68,6 +68,69 @@ h1 {
   padding: 16px;
 }
 
+.status-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.status-intro {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b3d2f;
+}
+
+.status-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.status-card {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(122, 91, 57, 0.08);
+}
+
+.status-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status-card-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #201911;
+}
+
+.status-chip {
+  margin: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.status-chip-ready {
+  background: rgba(47, 111, 76, 0.14);
+  color: #245239;
+}
+
+.status-chip-pending {
+  background: rgba(122, 91, 57, 0.12);
+  color: #6a4f31;
+}
+
+.status-card-detail {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b3d2f;
+}
+
 .wallet-panel {
   display: grid;
   gap: 14px;
