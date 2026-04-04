@@ -7,51 +7,9 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <main class="popup">
-      <section class="hero">
-        <p class="eyebrow">Hecate MVP</p>
-        <h1>Private sends should be understandable before they happen.</h1>
-        <p class="tagline">A Chrome wallet concept that reviews intent, explains the route, and only executes after an explicit user decision.</p>
-      </section>
-
-      <section class="panel">
-        <p class="panel-label">Review -&gt; Explain -&gt; Execute</p>
-        <div class="flow-grid">
-          <article class="flow-step">
-            <p class="step-number">01</p>
-            <h2>Review</h2>
-            <p>Show the send request in plain language before any action is taken.</p>
-          </article>
-          <article class="flow-step">
-            <p class="step-number">02</p>
-            <h2>Explain</h2>
-            <p>Make the selected rail and privacy tradeoff visible to the user.</p>
-          </article>
-          <article class="flow-step">
-            <p class="step-number">03</p>
-            <h2>Execute</h2>
-            <p>Run one private transfer flow only after the user confirms the choice.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="panel">
-        <p class="panel-label">Coming next</p>
-        <ul class="status-list">
-          <li>Wallet create, import, and unlock</li>
-          <li>Readiness and review screens</li>
-          <li>Rail probing with an explicit route decision</li>
-        </ul>
-      </section>
-
-      <section class="panel cta-panel" aria-label="Call to action placeholder">
-        <p class="panel-label">CTA Placeholder</p>
-        <div class="cta-box">
-          <p class="cta-title">Open wallet setup</p>
-          <p class="cta-copy">This button becomes active once wallet state is implemented in the next MVP steps.</p>
-          <button type="button" class="cta-button" disabled>Coming Soon</button>
-        </div>
-      </section>
-    </main>
+    <div id="app"></div>
+    <script src="../../node_modules/react/umd/react.production.min.js"></script>
+    <script src="../../node_modules/react-dom/umd/react-dom.production.min.js"></script>
+    <script type="module" src="./main.js"></script>
   </body>
 </html>
