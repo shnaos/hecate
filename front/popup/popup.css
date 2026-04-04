@@ -68,6 +68,77 @@ h1 {
   padding: 16px;
 }
 
+.wallet-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.wallet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.state-badge {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(122, 91, 57, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  color: #5d4427;
+}
+
+.wallet-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(122, 91, 57, 0.08);
+}
+
+.wallet-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #201911;
+}
+
+.wallet-copy,
+.wallet-detail {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b3d2f;
+}
+
+.wallet-meta {
+  margin: 14px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wallet-meta dt {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a5b39;
+}
+
+.wallet-meta dd {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #201911;
+}
+
+.wallet-actions {
+  display: grid;
+  gap: 10px;
+}
+
 .flow-grid {
   display: grid;
   gap: 10px;
@@ -108,40 +179,41 @@ h2 {
   margin-top: 8px;
 }
 
-.cta-panel {
-  margin-top: auto;
-}
-
-.cta-box {
-  margin-top: 10px;
-  padding: 14px;
-  border-radius: 16px;
-  background: #201911;
-  color: #f8f2e8;
-}
-
-.cta-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.cta-copy {
-  margin: 8px 0 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: rgba(248, 242, 232, 0.8);
-}
-
-.cta-button {
-  margin-top: 14px;
-  width: 100%;
+.primary-button,
+.secondary-button {
   padding: 11px 14px;
   border: none;
-  border-radius: 999px;
-  background: rgba(248, 242, 232, 0.18);
-  color: rgba(248, 242, 232, 0.72);
+  border-radius: 14px;
   font: inherit;
   font-weight: 700;
-  cursor: not-allowed;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.primary-button {
+  background: #201911;
+  color: #f8f2e8;
+  box-shadow: 0 10px 24px rgba(32, 25, 17, 0.16);
+}
+
+.secondary-button {
+  background: rgba(122, 91, 57, 0.1);
+  color: #3d2f21;
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible {
+  outline: 2px solid #7a5b39;
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .wallet-meta {
+    grid-template-columns: 1fr;
+  }
 }
