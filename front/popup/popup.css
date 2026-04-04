@@ -2,8 +2,8 @@
   color-scheme: light;
   font-family: "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top, #f5efe5 0%, #ece5d6 40%, #ddd4c2 100%);
-  color: #1e1a16;
+    radial-gradient(circle at top, #f7f0e2 0%, #ece3d0 42%, #d8ccba 100%);
+  color: #201911;
 }
 
 * {
@@ -13,7 +13,7 @@
 body {
   margin: 0;
   min-width: 360px;
-  min-height: 520px;
+  min-height: 560px;
 }
 
 .popup {
@@ -26,14 +26,17 @@ body {
 
 .hero,
 .panel {
-  border: 1px solid rgba(30, 26, 22, 0.12);
-  border-radius: 18px;
-  background: rgba(255, 251, 245, 0.86);
-  box-shadow: 0 10px 30px rgba(66, 51, 35, 0.08);
+  border: 1px solid rgba(32, 25, 17, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 252, 246, 0.88);
+  box-shadow: 0 12px 36px rgba(73, 53, 33, 0.1);
 }
 
 .hero {
   padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(111, 85, 52, 0.08), rgba(255, 252, 246, 0.72)),
+    rgba(255, 252, 246, 0.88);
 }
 
 .eyebrow,
@@ -43,27 +46,102 @@ body {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #86694b;
+  color: #7a5b39;
 }
 
 h1 {
   margin: 0;
-  font-size: 32px;
-  line-height: 1;
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 .tagline,
-.status,
-.flow-list {
+.status-list {
   margin: 12px 0 0;
   font-size: 14px;
   line-height: 1.5;
+  color: #4b3d2f;
 }
 
 .panel {
   padding: 16px;
 }
 
-.flow-list {
+.flow-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.flow-step {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(122, 91, 57, 0.08);
+}
+
+.step-number {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #7a5b39;
+}
+
+h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.flow-step p:last-child {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #4b3d2f;
+}
+
+.status-list {
   padding-left: 18px;
+}
+
+.status-list li + li {
+  margin-top: 8px;
+}
+
+.cta-panel {
+  margin-top: auto;
+}
+
+.cta-box {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #201911;
+  color: #f8f2e8;
+}
+
+.cta-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cta-copy {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(248, 242, 232, 0.8);
+}
+
+.cta-button {
+  margin-top: 14px;
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(248, 242, 232, 0.18);
+  color: rgba(248, 242, 232, 0.72);
+  font: inherit;
+  font-weight: 700;
+  cursor: not-allowed;
 }
