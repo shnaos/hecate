@@ -1,0 +1,79 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+.yarn-cache/
+.yarnrc.yml
+
+# Build outputs
+dist/
+build/
+out/
+coverage/
+.tmp/
+.temp/
+.cache/
+.angular/
+.next/
+.vercel/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+
+# Test artifacts
+playwright-report/
+test-results/
+.nyc_output/
+
+# Extension / packaging artifacts
+*.crx
+*.zip
+
+# Runtime / local data
+.runtime-data/
+data/
+storage/
+vault/
+keystore/
+*.sqlite
+*.db
+
+# Secrets / keys / certs
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.seed
+*.secret
+*.bak
+
+# Temporary files
+*.tmp
+*.cache
+*.pid
+
+# Agent / local context
+AGENT_CONTEXT.md
