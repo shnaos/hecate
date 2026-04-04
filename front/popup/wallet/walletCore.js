@@ -162,6 +162,7 @@ export async function unlockWallet({ password }) {
   const seedBytes = shortHexToBytes(unlocked.seedHex);
   unlockedSession = {
     seedBytes,
+    mnemonic: unlocked.mnemonic || null,
     address: realAddress,
     walletOrigin,
     unlockedAt: Date.now(),
@@ -176,6 +177,9 @@ export async function unlockWallet({ password }) {
 export function lockWallet() {
   if (unlockedSession && unlockedSession.seedBytes) {
     unlockedSession.seedBytes.fill(0);
+  }
+  if (unlockedSession) {
+    unlockedSession.mnemonic = null;
   }
   unlockedSession = null;
 }

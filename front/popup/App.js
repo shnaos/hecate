@@ -5,8 +5,10 @@ import {
   unlockWallet,
   lockWallet,
   resetWallet,
+  getWalletSession,
 } from "./wallet/walletCore.js";
 import { InvalidPasswordError } from "./wallet/keystore.js";
+import { runPrivateSendViaBackground } from "./unlinkBridge.js";
 
 const React = window.React;
 const h = React.createElement;
@@ -31,7 +33,7 @@ function probeRails({ walletState, recipient, amount, preferredRail }) {
 
   const publicAvailable = true;
   const privateAvailable =
-    normalizedRecipient.startsWith("0x") && parsedAmount <= 5;
+    normalizedRecipient.toLowerCase().startsWith("unlink1");
   const recommendedRail =
     privateAvailable && publicAvailable
       ? preferredRail === "public"
@@ -91,14 +93,14 @@ function deriveDecision(probeResult) {
   };
 }
 
-function createPrivateSendResult({ recipient, amount }) {
+function createPrivateSendResult({ recipient, amount, txId, status }) {
   return {
     status: "sent",
     route: "Private",
     recipient,
     amount,
-    transferId: `demo-private-${Date.now().toString(36)}`,
-    summary: "Private transfer demo completed successfully.",
+    transferId: txId,
+    summary: `Unlink private transfer completed with status: ${status}.`,
   };
 }
 
@@ -122,6 +124,7 @@ export function PopupShell() {
   const [probeResult, setProbeResult] = React.useState(null);
   const [sendState, setSendState] = React.useState("idle");
   const [sendResult, setSendResult] = React.useState(null);
+  const [sendError, setSendError] = React.useState("");
 
   const reviewReady = walletState === "unlocked";
   const parsedAmount = Number(amount);
@@ -181,6 +184,7 @@ export function PopupShell() {
   React.useEffect(() => {
     setSendState("idle");
     setSendResult(null);
+    setSendError("");
   }, [walletState, recipient, amount, probeResult]);
 
   React.useEffect(() => {
@@ -688,7 +692,7 @@ export function PopupShell() {
           h("input", {
             className: "review-input",
             type: "text",
-            placeholder: "0x... or demo recipient",
+            placeholder: "unlink1... private recipient",
             value: recipient,
             disabled: !reviewReady,
             onChange: (event) => setRecipient(event.target.value),
@@ -852,7 +856,7 @@ export function PopupShell() {
               h(
                 "p",
                 { className: "approval-note", key: "note" },
-                "This MVP approval boundary is local and explicit. No Unlink, Chainlink, or Ledger integration is active in this build.",
+                "This is a real Unlink execution trigger in MVP mode. No Chainlink or Ledger integration is active in this build.",
               ),
               h("dl", { className: "confirm-summary", key: "summary" }, [
                 h(React.Fragment, { key: "route" }, [
@@ -875,17 +879,43 @@ export function PopupShell() {
                     type: "button",
                     className: "primary-button",
                     key: "confirm-send",
-                    onClick: () => {
+                    onClick: async () => {
+                      const session = getWalletSession();
+                      const activeMnemonic =
+                        session && typeof session.mnemonic === "string"
+                          ? session.mnemonic.trim()
+                          : "";
+                      if (!activeMnemonic) {
+                        setSendError(
+                          "Missing unlocked mnemonic session. Lock and unlock the wallet again.",
+                        );
+                        return;
+                      }
                       setSendState("sending");
-                      window.setTimeout(() => {
+                      setSendError("");
+                      try {
+                        const transfer = await runPrivateSendViaBackground({
+                          mnemonic: activeMnemonic,
+                          recipientAddress: recipient.trim(),
+                          amount: amount.trim(),
+                        });
                         setSendResult(
                           createPrivateSendResult({
                             recipient: recipientPreview,
                             amount: amountPreview,
+                            txId: transfer.txId,
+                            status: transfer.status,
                           }),
                         );
                         setSendState("sent");
-                      }, 700);
+                      } catch (error) {
+                        setSendState("idle");
+                        setSendError(
+                          error instanceof Error
+                            ? error.message
+                            : "Private send failed",
+                        );
+                      }
                     },
                   },
                   "Approve and run private send",
@@ -909,9 +939,12 @@ export function PopupShell() {
               h(
                 "p",
                 { className: "result-copy", key: "copy" },
-                "Executing the local demo private send inside the popup.",
+                "Executing the Unlink private transfer from extension runtime.",
               ),
             ])
+          : null,
+        sendError
+          ? h("p", { className: "auth-error", key: "send-error" }, sendError)
           : null,
         sendResult
           ? h("div", { className: "result-box", key: "result" }, [
