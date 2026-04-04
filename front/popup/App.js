@@ -1,7 +1,7 @@
 const React = window.React;
 const h = React.createElement;
 
-function probeRails({ walletState, recipient, amount }) {
+function probeRails({ walletState, recipient, amount, preferredRail }) {
   const normalizedRecipient = recipient.trim();
   const parsedAmount = Number(amount);
   const hasValidDraft =
@@ -22,11 +22,16 @@ function probeRails({ walletState, recipient, amount }) {
   const publicAvailable = true;
   const privateAvailable =
     normalizedRecipient.startsWith("0x") && parsedAmount <= 5;
-  const recommendedRail = privateAvailable
-    ? "private"
-    : publicAvailable
-      ? "public"
-      : "none";
+  const recommendedRail =
+    privateAvailable && publicAvailable
+      ? preferredRail === "public"
+        ? "public"
+        : "private"
+      : privateAvailable
+        ? "private"
+        : publicAvailable
+          ? "public"
+          : "none";
 
   return {
     publicAvailable,
@@ -88,6 +93,8 @@ function createPrivateSendResult({ recipient, amount }) {
 }
 
 export function PopupShell() {
+  const [activeScreen, setActiveScreen] = React.useState("home");
+  const [preferredRail, setPreferredRail] = React.useState("private");
   const [walletState, setWalletState] = React.useState("empty");
   const [walletOrigin, setWalletOrigin] = React.useState(null);
   const [recipient, setRecipient] = React.useState("");
@@ -148,6 +155,7 @@ export function PopupShell() {
   const nextStepReady = reviewReady && probeResult !== null;
   const decision = deriveDecision(probeResult);
   const canSendPrivate = decision.selectedRoute === "Private";
+  const preferredRailLabel = preferredRail === "private" ? "Private" : "Public";
   const statusItems = [
     {
       label: "Extension",
@@ -196,7 +204,112 @@ export function PopupShell() {
     setSendResult(null);
   }, [walletState, recipient, amount, probeResult]);
 
+  const renderRailSelector = (scope) =>
+    h("div", { className: "rail-selector", key: `${scope}-rail-selector` }, [
+      h(
+        "button",
+        {
+          type: "button",
+          className: `rail-option ${preferredRail === "public" ? "rail-option-active" : ""}`,
+          key: `${scope}-public`,
+          onClick: () => setPreferredRail("public"),
+        },
+        "Public",
+      ),
+      h(
+        "button",
+        {
+          type: "button",
+          className: `rail-option ${preferredRail === "private" ? "rail-option-active" : ""}`,
+          key: `${scope}-private`,
+          onClick: () => setPreferredRail("private"),
+        },
+        "Private",
+      ),
+    ]);
+
   return h("main", { className: "popup" }, [
+    activeScreen === "home"
+      ? h(React.Fragment, { key: "home-screen" }, [
+          h("section", { className: "hero", key: "home-hero" }, [
+            h("div", { className: "brand-header", key: "brand-header" }, [
+              h("div", { className: "brand-identity", key: "identity" }, [
+                h("p", { className: "brand-mark", key: "mark" }, "H"),
+                h("div", { className: "brand-meta", key: "meta" }, [
+                  h("p", { className: "brand-name", key: "name" }, "Hecate"),
+                  h(
+                    "p",
+                    { className: "brand-subtitle", key: "subtitle" },
+                    "Privacy-first wallet demo",
+                  ),
+                ]),
+              ]),
+              h("p", { className: "brand-badge", key: "badge" }, "Hackathon MVP"),
+            ]),
+            h("p", { className: "eyebrow", key: "eyebrow" }, "Open Hecate"),
+            h("h1", { key: "headline" }, "Choose route mode, then open Send."),
+            h(
+              "p",
+              { className: "tagline", key: "tagline" },
+              "This keeps the live demo short: pick a demo route, enter Send, then run review, explain, and execute.",
+            ),
+          ]),
+          h("section", { className: "panel route-choice-panel", key: "home-route" }, [
+            h("p", { className: "panel-label", key: "label" }, "Route mode"),
+            h(
+              "p",
+              { className: "status-intro", key: "copy" },
+              `Current selection: ${preferredRailLabel}. This is a demo-facing route choice control, not a full policy engine.`,
+            ),
+            renderRailSelector("home"),
+          ]),
+          h("section", { className: "panel send-entry-panel", key: "home-send" }, [
+            h("p", { className: "panel-label", key: "label" }, "Action"),
+            h("article", { className: "send-entry-card", key: "card" }, [
+              h("p", { className: "send-entry-title", key: "title" }, "Send"),
+              h(
+                "p",
+                { className: "send-entry-copy", key: "copy" },
+                "Open the wallet-like send screen and continue with the existing private flow.",
+              ),
+              h("div", { className: "send-entry-row", key: "row" }, [
+                h("p", { className: "state-badge", key: "wallet-badge" }, walletCopy.badge),
+                h(
+                  "button",
+                  {
+                    type: "button",
+                    className: "primary-button",
+                    key: "open-send",
+                    onClick: () => setActiveScreen("send"),
+                  },
+                  "Open Send",
+                ),
+              ]),
+            ]),
+          ]),
+        ])
+      : h(React.Fragment, { key: "send-screen" }, [
+          h("section", { className: "panel send-topbar-panel", key: "send-topbar" }, [
+            h("div", { className: "send-topbar-row", key: "row" }, [
+              h(
+                "button",
+                {
+                  type: "button",
+                  className: "secondary-button",
+                  key: "back-home",
+                  onClick: () => setActiveScreen("home"),
+                },
+                "Back",
+              ),
+              h("p", { className: "send-screen-title", key: "title" }, "Send"),
+              h(
+                "p",
+                { className: "status-chip status-chip-ready", key: "chip" },
+                `${preferredRailLabel} selected`,
+              ),
+            ]),
+            renderRailSelector("send"),
+          ]),
     h("section", { className: "hero", key: "hero" }, [
       h("div", { className: "brand-header", key: "brand-header" }, [
         h("div", { className: "brand-identity", key: "identity" }, [
@@ -411,6 +524,7 @@ export function PopupShell() {
                   walletState,
                   recipient,
                   amount,
+                  preferredRail,
                 }),
               ),
           },
@@ -420,7 +534,7 @@ export function PopupShell() {
           "p",
           { className: "review-probe-note", key: "probe-note" },
           reviewReady
-            ? "Probe uses local MVP rules from this draft. It does not execute a transfer."
+            ? `Probe uses local MVP rules from this draft and honors your ${preferredRailLabel.toLowerCase()} preference when both paths are available. It does not execute a transfer.`
             : "Unlock the wallet and enter a draft before route probing becomes available.",
         ),
       ]),
@@ -701,5 +815,6 @@ export function PopupShell() {
         ),
       ]),
     ]),
+      ]),
   ]);
 }
