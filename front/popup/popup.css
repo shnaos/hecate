@@ -170,6 +170,12 @@ body {
   gap: 10px;
 }
 
+.auth-error {
+  margin: 0;
+  font-size: 13px;
+  color: #ff7f8f;
+}
+
 .wallet-topbar {
   padding: 10px 12px;
   display: flex;
@@ -400,6 +406,13 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #060c1b;
   color: #dce6ff;
+}
+
+.stage-placeholder {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(143, 179, 255, 0.45);
+  background: rgba(12, 23, 44, 0.45);
 }
 
 .review-block-title {

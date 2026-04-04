@@ -1,5 +1,48 @@
 const React = window.React;
 const h = React.createElement;
+const POPUP_WALLET_STORAGE_KEY = "hecate:popup-wallet:v1";
+
+function readStoredWallet() {
+  try {
+    const raw = window.localStorage.getItem(POPUP_WALLET_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== 1) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredWallet(record) {
+  window.localStorage.setItem(POPUP_WALLET_STORAGE_KEY, JSON.stringify(record));
+}
+
+function clearStoredWallet() {
+  window.localStorage.removeItem(POPUP_WALLET_STORAGE_KEY);
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function randomSaltHex() {
+  const salt = new Uint8Array(16);
+  window.crypto.getRandomValues(salt);
+  return bytesToHex(salt);
+}
+
+async function hashPassword(password, saltHex) {
+  const payload = new TextEncoder().encode(`${saltHex}:${password}`);
+  const digest = await window.crypto.subtle.digest("SHA-256", payload);
+  return bytesToHex(new Uint8Array(digest));
+}
 
 function probeRails({ walletState, recipient, amount, preferredRail }) {
   const normalizedRecipient = recipient.trim();
@@ -94,11 +137,17 @@ function createPrivateSendResult({ recipient, amount }) {
 
 export function PopupShell() {
   const hecateLogoSrc = "../../styles/hecate-logo.png";
+  const initialStoredWallet = readStoredWallet();
   const [activeScreen, setActiveScreen] = React.useState("home");
   const [preferredRail, setPreferredRail] = React.useState("private");
-  const [walletState, setWalletState] = React.useState("empty");
-  const [walletOrigin, setWalletOrigin] = React.useState(null);
+  const [walletState, setWalletState] = React.useState(
+    initialStoredWallet ? "locked" : "empty",
+  );
+  const [walletOrigin, setWalletOrigin] = React.useState(
+    initialStoredWallet?.walletOrigin || null,
+  );
   const [unlockPassword, setUnlockPassword] = React.useState("");
+  const [unlockError, setUnlockError] = React.useState("");
   const [recipient, setRecipient] = React.useState("");
   const [amount, setAmount] = React.useState("");
   const [probeResult, setProbeResult] = React.useState(null);
@@ -112,6 +161,7 @@ export function PopupShell() {
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0;
   const decision = deriveDecision(probeResult);
+  const hasProbeResult = probeResult !== null;
   const canSendPrivate = decision.selectedRoute === "Private";
   const preferredRailLabel = preferredRail === "private" ? "Private" : "Public";
   const walletOriginLabel =
@@ -191,8 +241,16 @@ export function PopupShell() {
               className: "primary-button",
               key: "create",
               onClick: () => {
+                writeStoredWallet({
+                  version: 1,
+                  walletOrigin: "create",
+                  passwordSaltHex: null,
+                  passwordHashHex: null,
+                });
                 setWalletOrigin("create");
                 setWalletState("locked");
+                setUnlockPassword("");
+                setUnlockError("");
               },
             },
             "Create wallet",
@@ -204,8 +262,16 @@ export function PopupShell() {
               className: "secondary-button",
               key: "import",
               onClick: () => {
+                writeStoredWallet({
+                  version: 1,
+                  walletOrigin: "import",
+                  passwordSaltHex: null,
+                  passwordHashHex: null,
+                });
                 setWalletOrigin("import");
                 setWalletState("locked");
+                setUnlockPassword("");
+                setUnlockError("");
               },
             },
             "Import wallet",
@@ -241,10 +307,18 @@ export function PopupShell() {
             type: "password",
             placeholder: "Enter password",
             value: unlockPassword,
-            onChange: (event) => setUnlockPassword(event.target.value),
+            onChange: (event) => {
+              setUnlockPassword(event.target.value);
+              if (unlockError) {
+                setUnlockError("");
+              }
+            },
             key: "input",
           }),
         ]),
+        unlockError
+          ? h("p", { className: "auth-error", key: "unlock-error" }, unlockError)
+          : null,
         h("div", { className: "auth-actions", key: "actions" }, [
           h(
             "button",
@@ -253,9 +327,40 @@ export function PopupShell() {
               className: "primary-button",
               disabled: unlockPassword.trim().length === 0,
               key: "unlock",
-              onClick: () => {
+              onClick: async () => {
+                const password = unlockPassword.trim();
+                const storedWallet = readStoredWallet();
+                if (!storedWallet) {
+                  setWalletState("empty");
+                  setWalletOrigin(null);
+                  setUnlockError("No wallet found. Create or import one first.");
+                  return;
+                }
+
+                if (!storedWallet.passwordSaltHex || !storedWallet.passwordHashHex) {
+                  const passwordSaltHex = randomSaltHex();
+                  const passwordHashHex = await hashPassword(password, passwordSaltHex);
+                  writeStoredWallet({
+                    ...storedWallet,
+                    passwordSaltHex,
+                    passwordHashHex,
+                  });
+                  setWalletState("unlocked");
+                  setUnlockPassword("");
+                  setUnlockError("");
+                  setActiveScreen("home");
+                  return;
+                }
+
+                const attemptHashHex = await hashPassword(password, storedWallet.passwordSaltHex);
+                if (attemptHashHex !== storedWallet.passwordHashHex) {
+                  setUnlockError("Invalid password");
+                  return;
+                }
+
                 setWalletState("unlocked");
                 setUnlockPassword("");
+                setUnlockError("");
                 setActiveScreen("home");
               },
             },
@@ -268,9 +373,11 @@ export function PopupShell() {
               className: "secondary-button",
               key: "reset",
               onClick: () => {
+                clearStoredWallet();
                 setWalletState("empty");
                 setWalletOrigin(null);
                 setUnlockPassword("");
+                setUnlockError("");
               },
             },
             "Reset wallet",
@@ -437,75 +544,75 @@ export function PopupShell() {
             : "Unlock the wallet and enter a draft before route probing becomes available.",
         ),
       ]),
-      h("div", { className: "review-block", key: "block" }, [
-        h("p", { className: "review-block-title", key: "title" }, "Decision summary"),
-        h("dl", { className: "review-summary", key: "summary" }, [
-          h(React.Fragment, { key: "recipient" }, [
-            h("dt", { key: "label" }, "Recipient"),
-            h("dd", { key: "value" }, recipientPreview),
-          ]),
-          h(React.Fragment, { key: "amount" }, [
-            h("dt", { key: "label" }, "Amount"),
-            h("dd", { key: "value" }, amountPreview),
-          ]),
-          h(React.Fragment, { key: "route" }, [
-            h("dt", { key: "label" }, "Public path"),
+      hasProbeResult
+        ? h("div", { className: "review-block", key: "block" }, [
+            h("p", { className: "review-block-title", key: "title" }, "Decision summary"),
+            h("dl", { className: "review-summary", key: "summary" }, [
+              h(React.Fragment, { key: "recipient" }, [
+                h("dt", { key: "label" }, "Recipient"),
+                h("dd", { key: "value" }, recipientPreview),
+              ]),
+              h(React.Fragment, { key: "amount" }, [
+                h("dt", { key: "label" }, "Amount"),
+                h("dd", { key: "value" }, amountPreview),
+              ]),
+              h(React.Fragment, { key: "route" }, [
+                h("dt", { key: "label" }, "Public path"),
+                h(
+                  "dd",
+                  { key: "value" },
+                  probeResult.publicAvailable ? "Available" : "Unavailable",
+                ),
+              ]),
+              h(React.Fragment, { key: "private" }, [
+                h("dt", { key: "label" }, "Private path"),
+                h(
+                  "dd",
+                  { key: "value" },
+                  probeResult.privateAvailable ? "Available" : "Unavailable",
+                ),
+              ]),
+              h(React.Fragment, { key: "recommended" }, [
+                h("dt", { key: "label" }, "Selected route"),
+                h(
+                  "dd",
+                  { key: "value" },
+                  decision.selectedRoute,
+                ),
+              ]),
+              h(React.Fragment, { key: "why" }, [
+                h("dt", { key: "label" }, "Why"),
+                h(
+                  "dd",
+                  { key: "value" },
+                  decision.why,
+                ),
+              ]),
+              h(React.Fragment, { key: "fallback" }, [
+                h("dt", { key: "label" }, "Fallback"),
+                h(
+                  "dd",
+                  { key: "value" },
+                  decision.fallback,
+                ),
+              ]),
+            ]),
             h(
-              "dd",
-              { key: "value" },
-              probeResult
-                ? probeResult.publicAvailable
-                  ? "Available"
-                  : "Unavailable"
-                : "Run probe to check availability.",
+              "p",
+              { className: "review-note", key: "note" },
+              "Decision is ready. Final approval is still required before execution.",
+            ),
+          ])
+        : h("div", { className: "stage-placeholder", key: "decision-placeholder" }, [
+            h("p", { className: "review-block-title", key: "title" }, "Step 2: Explain"),
+            h(
+              "p",
+              { className: "review-note", key: "note" },
+              "Run route probing to reveal the decision summary.",
             ),
           ]),
-          h(React.Fragment, { key: "private" }, [
-            h("dt", { key: "label" }, "Private path"),
-            h(
-              "dd",
-              { key: "value" },
-              probeResult
-                ? probeResult.privateAvailable
-                  ? "Available"
-                  : "Unavailable"
-                : "Run probe to check availability.",
-            ),
-          ]),
-          h(React.Fragment, { key: "recommended" }, [
-            h("dt", { key: "label" }, "Selected route"),
-            h(
-              "dd",
-              { key: "value" },
-              decision.selectedRoute,
-            ),
-          ]),
-          h(React.Fragment, { key: "why" }, [
-            h("dt", { key: "label" }, "Why"),
-            h(
-              "dd",
-              { key: "value" },
-              decision.why,
-            ),
-          ]),
-          h(React.Fragment, { key: "fallback" }, [
-            h("dt", { key: "label" }, "Fallback"),
-            h(
-              "dd",
-              { key: "value" },
-              decision.fallback,
-            ),
-          ]),
-        ]),
-        h(
-          "p",
-          { className: "review-note", key: "note" },
-          probeResult
-            ? "Decision is ready. Final approval is still required before execution."
-            : "Run route probe to populate this decision summary.",
-        ),
-      ]),
-      h("div", { className: "send-panel", key: "send-panel" }, [
+      hasProbeResult
+        ? h("div", { className: "send-panel", key: "send-panel" }, [
         h("div", { className: "review-header", key: "header" }, [
           h("p", { className: "panel-label", key: "label" }, "Approve and send"),
           h(
@@ -659,9 +766,18 @@ export function PopupShell() {
               ),
             ])
           : null,
-      ]),
+      ])
+        : h("div", { className: "stage-placeholder", key: "approve-placeholder" }, [
+            h("p", { className: "review-block-title", key: "title" }, "Step 3: Execute"),
+            h(
+              "p",
+              { className: "review-note", key: "note" },
+              "Approval appears after probing so the send screen stays focused.",
+            ),
+          ]),
     ]),
-    h("section", { className: "panel flow-panel panel-dark", key: "flow" }, [
+    activeScreen === "home"
+      ? h("section", { className: "panel flow-panel panel-dark", key: "flow" }, [
       h(
         "p",
         { className: "panel-label", key: "label" },
@@ -701,7 +817,8 @@ export function PopupShell() {
           ),
         ]),
       ]),
-    ]),
+    ])
+      : null,
         ]),
   ]);
 }
