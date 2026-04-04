@@ -97,103 +97,31 @@ export function PopupShell() {
   const [preferredRail, setPreferredRail] = React.useState("private");
   const [walletState, setWalletState] = React.useState("empty");
   const [walletOrigin, setWalletOrigin] = React.useState(null);
+  const [unlockPassword, setUnlockPassword] = React.useState("");
   const [recipient, setRecipient] = React.useState("");
   const [amount, setAmount] = React.useState("");
   const [probeResult, setProbeResult] = React.useState(null);
   const [sendState, setSendState] = React.useState("idle");
   const [sendResult, setSendResult] = React.useState(null);
-  const walletReady = walletState !== "empty";
+
   const reviewReady = walletState === "unlocked";
   const parsedAmount = Number(amount);
   const hasDraft =
     recipient.trim().length > 0 &&
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0;
-
-  const walletCopyByState = {
-    empty: {
-      badge: "No wallet yet",
-      title: "Set up your wallet",
-      copy:
-        "Choose Create or Import to start the demo wallet state.",
-      detail:
-        "This state is local to the popup and keeps the MVP demo explicit.",
-    },
-    locked: {
-      badge: "Locked wallet",
-      title: "Wallet is ready but locked",
-      copy: "Wallet context exists, but actions stay blocked until you unlock.",
-      detail: "Unlock to continue through review, probe, and final approval.",
-    },
-    unlocked: {
-      badge: "Unlocked wallet",
-      title: "Wallet is ready for the demo flow",
-      copy: "Wallet context is active and ready for the demo flow.",
-      detail: "State remains local to this popup and user approval still gates execution.",
-    },
-  };
-
-  const walletCopy = walletCopyByState[walletState];
-  const walletOriginLabel =
-    walletOrigin === "create"
-      ? "Created in Hecate"
-      : walletOrigin === "import"
-        ? "Imported into Hecate"
-        : "Not set";
-  const recipientPreview = recipient.trim() || "Recipient will appear here";
-  const amountPreview = amount.trim() || "Amount will appear here";
-  const routeProbeState = probeResult
-    ? probeResult.status
-    : reviewReady && hasDraft
-      ? "Ready to probe"
-      : "Not ready yet";
-  const routeProbeTone = probeResult
-    ? "ready"
-    : reviewReady && hasDraft
-      ? "ready"
-      : "pending";
-  const nextStepReady = reviewReady && probeResult !== null;
   const decision = deriveDecision(probeResult);
   const canSendPrivate = decision.selectedRoute === "Private";
   const preferredRailLabel = preferredRail === "private" ? "Private" : "Public";
-  const statusItems = [
-    {
-      label: "Extension",
-      state: "Ready",
-      tone: "ready",
-      detail: "The popup is loaded in Chrome and ready for the demo.",
-    },
-    {
-      label: "Wallet",
-      state: walletReady ? walletCopy.badge : "Setup required",
-      tone: walletReady ? "ready" : "pending",
-      detail: walletReady
-        ? `Current mode: ${walletCopy.badge.toLowerCase()}.`
-        : "Create or import a wallet before the demo can continue.",
-    },
-    {
-      label: "Route probing",
-      state: routeProbeState,
-      tone: routeProbeTone,
-      detail: probeResult
-        ? `Public: ${probeResult.publicAvailable ? "yes" : "no"}. Private: ${probeResult.privateAvailable ? "yes" : "no"}.`
-        : "Probe the current draft to check public and private availability.",
-    },
-    {
-      label: "Happy path",
-      state: sendResult
-        ? "Private send demo complete"
-        : nextStepReady
-          ? "Decision output ready"
-          : "Blocked on probing",
-      tone: sendResult || nextStepReady ? "ready" : "pending",
-      detail: sendResult
-        ? "The private send result is visible and the happy path is complete."
-        : nextStepReady
-          ? "Decision is visible. Final approval can now be opened."
-          : "Unlock wallet, draft transfer, then run route probe.",
-    },
-  ];
+  const walletOriginLabel =
+    walletOrigin === "create"
+      ? "Created"
+      : walletOrigin === "import"
+        ? "Imported"
+        : "Not configured";
+  const accountLabel = walletOrigin === "import" ? "Imported Account" : "Main Account";
+  const recipientPreview = recipient.trim() || "Recipient will appear here";
+  const amountPreview = amount.trim() || "Amount will appear here";
 
   React.useEffect(() => {
     setProbeResult(null);
@@ -204,13 +132,19 @@ export function PopupShell() {
     setSendResult(null);
   }, [walletState, recipient, amount, probeResult]);
 
+  React.useEffect(() => {
+    if (walletState !== "unlocked") {
+      setActiveScreen("home");
+    }
+  }, [walletState]);
+
   const renderRailSelector = (scope) =>
-    h("div", { className: "rail-selector", key: `${scope}-rail-selector` }, [
+    h("div", { className: "route-toggle", key: `${scope}-rail-selector` }, [
       h(
         "button",
         {
           type: "button",
-          className: `rail-option ${preferredRail === "public" ? "rail-option-active" : ""}`,
+          className: `route-toggle-option ${preferredRail === "public" ? "route-toggle-option-active" : ""}`,
           key: `${scope}-public`,
           onClick: () => setPreferredRail("public"),
         },
@@ -220,7 +154,7 @@ export function PopupShell() {
         "button",
         {
           type: "button",
-          className: `rail-option ${preferredRail === "private" ? "rail-option-active" : ""}`,
+          className: `route-toggle-option ${preferredRail === "private" ? "route-toggle-option-active" : ""}`,
           key: `${scope}-private`,
           onClick: () => setPreferredRail("private"),
         },
@@ -228,243 +162,187 @@ export function PopupShell() {
       ),
     ]);
 
-  return h("main", { className: "popup" }, [
+  if (walletState === "empty") {
+    return h("main", { className: "popup popup-dark auth-screen" }, [
+      h("section", { className: "auth-hero", key: "auth-hero" }, [
+        h("div", { className: "owl-logo", key: "logo" }, "🦉"),
+        h("p", { className: "auth-title-mark", key: "mark" }, "HECATE"),
+      ]),
+      h("section", { className: "auth-card", key: "auth-card" }, [
+        h("h1", { className: "auth-title", key: "title" }, "Create or import wallet"),
+        h(
+          "p",
+          { className: "auth-subtitle", key: "subtitle" },
+          "Set up wallet access before opening the home dashboard.",
+        ),
+        h("div", { className: "auth-actions", key: "actions" }, [
+          h(
+            "button",
+            {
+              type: "button",
+              className: "primary-button",
+              key: "create",
+              onClick: () => {
+                setWalletOrigin("create");
+                setWalletState("locked");
+              },
+            },
+            "Create wallet",
+          ),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "secondary-button",
+              key: "import",
+              onClick: () => {
+                setWalletOrigin("import");
+                setWalletState("locked");
+              },
+            },
+            "Import wallet",
+          ),
+        ]),
+      ]),
+    ]);
+  }
+
+  if (walletState === "locked") {
+    return h("main", { className: "popup popup-dark auth-screen" }, [
+      h("section", { className: "auth-hero", key: "auth-hero" }, [
+        h("div", { className: "owl-logo", key: "logo" }, "🦉"),
+        h("p", { className: "auth-title-mark", key: "mark" }, "HECATE"),
+      ]),
+      h("section", { className: "auth-card", key: "unlock-card" }, [
+        h("h1", { className: "auth-title", key: "title" }, "Unlock Wallet"),
+        h("p", { className: "auth-subtitle", key: "subtitle" }, [
+          "Wallet source: ",
+          walletOriginLabel,
+        ]),
+        h("label", { className: "auth-field", key: "password-field" }, [
+          h("span", { className: "auth-label", key: "label" }, "Password"),
+          h("input", {
+            className: "auth-input",
+            type: "password",
+            placeholder: "Enter password",
+            value: unlockPassword,
+            onChange: (event) => setUnlockPassword(event.target.value),
+            key: "input",
+          }),
+        ]),
+        h("div", { className: "auth-actions", key: "actions" }, [
+          h(
+            "button",
+            {
+              type: "button",
+              className: "primary-button",
+              disabled: unlockPassword.trim().length === 0,
+              key: "unlock",
+              onClick: () => {
+                setWalletState("unlocked");
+                setUnlockPassword("");
+                setActiveScreen("home");
+              },
+            },
+            "Unlock",
+          ),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "secondary-button",
+              key: "reset",
+              onClick: () => {
+                setWalletState("empty");
+                setWalletOrigin(null);
+                setUnlockPassword("");
+              },
+            },
+            "Reset wallet",
+          ),
+        ]),
+      ]),
+    ]);
+  }
+
+  return h("main", { className: "popup popup-dark" }, [
     activeScreen === "home"
-      ? h(React.Fragment, { key: "home-screen" }, [
-          h("section", { className: "hero", key: "home-hero" }, [
-            h("div", { className: "brand-header", key: "brand-header" }, [
-              h("div", { className: "brand-identity", key: "identity" }, [
-                h("p", { className: "brand-mark", key: "mark" }, "H"),
-                h("div", { className: "brand-meta", key: "meta" }, [
-                  h("p", { className: "brand-name", key: "name" }, "Hecate"),
-                  h(
-                    "p",
-                    { className: "brand-subtitle", key: "subtitle" },
-                    "Privacy-first wallet demo",
-                  ),
-                ]),
-              ]),
-              h("p", { className: "brand-badge", key: "badge" }, "Hackathon MVP"),
+      ? h(React.Fragment, { key: "home" }, [
+          h("section", { className: "wallet-topbar", key: "topbar" }, [
+            h("div", { className: "wallet-topbar-left", key: "left" }, [
+              h("p", { className: "wallet-topbar-brand", key: "brand" }, "Hecate"),
+              h("p", { className: "wallet-topbar-account", key: "account" }, accountLabel),
             ]),
-            h("p", { className: "eyebrow", key: "eyebrow" }, "Open Hecate"),
-            h("h1", { key: "headline" }, "Choose route mode, then open Send."),
             h(
               "p",
-              { className: "tagline", key: "tagline" },
-              "This keeps the live demo short: pick a demo route, enter Send, then run review, explain, and execute.",
+              { className: "wallet-topbar-chip", key: "chip" },
+              `${preferredRailLabel} mode`,
             ),
           ]),
-          h("section", { className: "panel route-choice-panel", key: "home-route" }, [
-            h("p", { className: "panel-label", key: "label" }, "Route mode"),
-            h(
-              "p",
-              { className: "status-intro", key: "copy" },
-              `Current selection: ${preferredRailLabel}. This is a demo-facing route choice control, not a full policy engine.`,
-            ),
+          h("section", { className: "balance-card", key: "balance" }, [
+            h("p", { className: "balance-label", key: "label" }, "Total balance"),
+            h("p", { className: "balance-value", key: "value" }, "469,75 $US"),
+            h("p", { className: "balance-change", key: "change" }, "+0.00% (+$0.00)"),
+          ]),
+          h("section", { className: "panel panel-dark route-panel", key: "route" }, [
+            h("p", { className: "panel-label panel-label-dark", key: "label" }, "Public / Private"),
             renderRailSelector("home"),
+            h(
+              "p",
+              { className: "panel-note-dark", key: "note" },
+              "Demo route control only. Final route still depends on probing result.",
+            ),
           ]),
-          h("section", { className: "panel send-entry-panel", key: "home-send" }, [
-            h("p", { className: "panel-label", key: "label" }, "Action"),
-            h("article", { className: "send-entry-card", key: "card" }, [
-              h("p", { className: "send-entry-title", key: "title" }, "Send"),
-              h(
-                "p",
-                { className: "send-entry-copy", key: "copy" },
-                "Open the wallet-like send screen and continue with the existing private flow.",
-              ),
-              h("div", { className: "send-entry-row", key: "row" }, [
-                h("p", { className: "state-badge", key: "wallet-badge" }, walletCopy.badge),
-                h(
-                  "button",
-                  {
-                    type: "button",
-                    className: "primary-button",
-                    key: "open-send",
-                    onClick: () => setActiveScreen("send"),
-                  },
-                  "Open Send",
-                ),
-              ]),
+          h("section", { className: "actions-grid", key: "actions" }, [
+            h(
+              "button",
+              {
+                type: "button",
+                className: "action-tile action-tile-primary",
+                key: "send",
+                onClick: () => setActiveScreen("send"),
+              },
+              [
+                h("p", { className: "action-icon", key: "icon" }, "▷"),
+                h("p", { className: "action-label", key: "label" }, "Send"),
+              ],
+            ),
+            h("button", { type: "button", className: "action-tile", key: "swap", disabled: true }, [
+              h("p", { className: "action-icon", key: "icon" }, "↔"),
+              h("p", { className: "action-label", key: "label" }, "Swap"),
+            ]),
+            h("button", { type: "button", className: "action-tile", key: "receive", disabled: true }, [
+              h("p", { className: "action-icon", key: "icon" }, "↙"),
+              h("p", { className: "action-label", key: "label" }, "Receive"),
+            ]),
+            h("button", { type: "button", className: "action-tile", key: "tx", disabled: true }, [
+              h("p", { className: "action-icon", key: "icon" }, "▤"),
+              h("p", { className: "action-label", key: "label" }, "Transactions"),
             ]),
           ]),
         ])
-      : h(React.Fragment, { key: "send-screen" }, [
-          h("section", { className: "panel send-topbar-panel", key: "send-topbar" }, [
-            h("div", { className: "send-topbar-row", key: "row" }, [
+      : h(React.Fragment, { key: "send" }, [
+          h("section", { className: "wallet-topbar send-topbar", key: "send-topbar" }, [
+            h("div", { className: "wallet-topbar-left", key: "left" }, [
               h(
                 "button",
                 {
                   type: "button",
-                  className: "secondary-button",
-                  key: "back-home",
+                  className: "icon-button",
+                  key: "back",
                   onClick: () => setActiveScreen("home"),
                 },
                 "Back",
               ),
-              h("p", { className: "send-screen-title", key: "title" }, "Send"),
-              h(
-                "p",
-                { className: "status-chip status-chip-ready", key: "chip" },
-                `${preferredRailLabel} selected`,
-              ),
+              h("p", { className: "wallet-topbar-account", key: "account" }, "0x4ebc...0c0e"),
             ]),
+            h("p", { className: "wallet-topbar-brand", key: "title" }, "Send"),
+          ]),
+          h("section", { className: "panel panel-dark route-panel", key: "send-route" }, [
+            h("p", { className: "panel-label panel-label-dark", key: "label" }, "Route mode"),
             renderRailSelector("send"),
           ]),
-    h("section", { className: "hero", key: "hero" }, [
-      h("div", { className: "brand-header", key: "brand-header" }, [
-        h("div", { className: "brand-identity", key: "identity" }, [
-          h("p", { className: "brand-mark", key: "mark" }, "H"),
-          h("div", { className: "brand-meta", key: "meta" }, [
-            h("p", { className: "brand-name", key: "name" }, "Hecate"),
-            h(
-              "p",
-              { className: "brand-subtitle", key: "subtitle" },
-              "Privacy-first wallet demo",
-            ),
-          ]),
-        ]),
-        h("p", { className: "brand-badge", key: "badge" }, "Hackathon MVP"),
-      ]),
-      h("p", { className: "eyebrow", key: "eyebrow" }, "Live demo flow"),
-      h(
-        "h1",
-        { key: "headline" },
-        "Private sends should be understandable before they happen.",
-      ),
-      h(
-        "p",
-        { className: "tagline", key: "tagline" },
-        "Review the draft, explain the selected route, then execute only after final approval.",
-      ),
-    ]),
-    h("section", { className: "panel status-panel", key: "status" }, [
-      h("p", { className: "panel-label", key: "label" }, "MVP status"),
-      h("p", { className: "status-intro", key: "intro" }, [
-        "Use this checklist while narrating the demo. ",
-        nextStepReady
-          ? "Review and explanation are ready, so approval can follow."
-          : "Start by unlocking the wallet, drafting the transfer, and probing routes.",
-      ]),
-      h(
-        "div",
-        { className: "status-grid", key: "grid" },
-        statusItems.map((item) =>
-          h("article", { className: "status-card", key: item.label }, [
-            h("div", { className: "status-card-header", key: "header" }, [
-              h("p", { className: "status-card-label", key: "label" }, item.label),
-              h(
-                "p",
-                {
-                  className: `status-chip status-chip-${item.tone}`,
-                  key: "chip",
-                },
-                item.state,
-              ),
-            ]),
-            h("p", { className: "status-card-detail", key: "detail" }, item.detail),
-          ]),
-        ),
-      ),
-    ]),
-    h("section", { className: "panel wallet-panel", key: "wallet" }, [
-      h("div", { className: "wallet-header", key: "header" }, [
-        h("p", { className: "panel-label", key: "label" }, "Wallet state"),
-        h("p", { className: "state-badge", key: "badge" }, walletCopy.badge),
-      ]),
-      h("div", { className: "wallet-card", key: "card" }, [
-        h("p", { className: "wallet-title", key: "title" }, walletCopy.title),
-        h("p", { className: "wallet-copy", key: "copy" }, walletCopy.copy),
-        h("dl", { className: "wallet-meta", key: "meta" }, [
-          h(React.Fragment, { key: "source" }, [
-            h("dt", { key: "source-label" }, "Wallet source"),
-            h("dd", { key: "source-value" }, walletOriginLabel),
-          ]),
-          h(React.Fragment, { key: "readiness" }, [
-            h("dt", { key: "readiness-label" }, "MVP readiness"),
-            h(
-              "dd",
-              { key: "readiness-value" },
-              walletState === "unlocked"
-                ? "Ready for status and review work"
-                : "Setup still in progress",
-            ),
-          ]),
-        ]),
-        h("p", { className: "wallet-detail", key: "detail" }, walletCopy.detail),
-      ]),
-      h("div", { className: "wallet-actions", key: "actions" }, [
-        walletState === "empty"
-          ? h(
-              "button",
-              {
-                type: "button",
-                className: "primary-button",
-                key: "create",
-                onClick: () => {
-                  setWalletOrigin("create");
-                  setWalletState("locked");
-                },
-              },
-              "Create wallet",
-            )
-          : null,
-        walletState === "empty"
-          ? h(
-              "button",
-              {
-                type: "button",
-                className: "secondary-button",
-                key: "import",
-                onClick: () => {
-                  setWalletOrigin("import");
-                  setWalletState("locked");
-                },
-              },
-              "Import wallet",
-            )
-          : null,
-        walletState === "locked"
-          ? h(
-              "button",
-              {
-                type: "button",
-                className: "primary-button",
-                key: "unlock",
-                onClick: () => setWalletState("unlocked"),
-              },
-              "Unlock wallet",
-            )
-          : null,
-        walletState === "unlocked"
-          ? h(
-              "button",
-              {
-                type: "button",
-                className: "primary-button",
-                key: "lock",
-                onClick: () => setWalletState("locked"),
-              },
-              "Lock wallet",
-            )
-          : null,
-        walletState !== "empty"
-          ? h(
-              "button",
-              {
-                type: "button",
-                className: "secondary-button",
-                key: "reset",
-                onClick: () => {
-                  setWalletOrigin(null);
-                  setWalletState("empty");
-                },
-              },
-              "Reset wallet",
-            )
-          : null,
-      ]),
-    ]),
-    h("section", { className: "panel review-panel", key: "review" }, [
+          h("section", { className: "panel review-panel panel-dark", key: "review" }, [
       h("div", { className: "review-header", key: "header" }, [
         h("p", { className: "panel-label", key: "label" }, "Review transfer"),
         h(
@@ -762,7 +640,7 @@ export function PopupShell() {
           : null,
       ]),
     ]),
-    h("section", { className: "panel flow-panel", key: "flow" }, [
+    h("section", { className: "panel flow-panel panel-dark", key: "flow" }, [
       h(
         "p",
         { className: "panel-label", key: "label" },
@@ -803,18 +681,6 @@ export function PopupShell() {
         ]),
       ]),
     ]),
-    h("section", { className: "panel", key: "demo-summary" }, [
-      h("p", { className: "panel-label", key: "label" }, "Demo summary"),
-      h("ul", { className: "status-list", key: "list" }, [
-        h("li", { key: "wallet" }, "Wallet setup and unlock appear first, so demo readiness is obvious."),
-        h("li", { key: "status" }, "Status, review, probing, decision, approval, and result read as one narrative."),
-        h(
-          "li",
-          { key: "decision" },
-          "Current execution is local MVP behavior only; no live sponsor integration is claimed.",
-        ),
-      ]),
-    ]),
-      ]),
+        ]),
   ]);
 }
