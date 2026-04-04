@@ -244,7 +244,12 @@ export function PopupShell() {
         h(
           "p",
           { className: "auth-subtitle", key: "subtitle" },
-          "Real mnemonic-backed setup with encrypted keystore persistence.",
+          "Setup wallet with mnemonic backup and encrypted keystore persistence.",
+        ),
+        h(
+          "p",
+          { className: "auth-subtitle", key: "mode-help" },
+          "Use this screen to create/import. Unlock appears after wallet setup.",
         ),
         h("div", { className: "route-toggle", key: "setup-mode-toggle" }, [
           h(
@@ -426,13 +431,35 @@ export function PopupShell() {
                 },
                 setupBusy ? "Importing..." : "Import wallet",
               ),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "secondary-button",
+              disabled: setupBusy,
+              key: "setup-reset",
+              onClick: async () => {
+                await resetWallet();
+                setWalletState("empty");
+                setWalletOrigin(null);
+                setWalletAddress(null);
+                setCreatedMnemonic("");
+                setSetupPassword("");
+                setSetupMnemonic("");
+                setSetupError("");
+                setUnlockPassword("");
+                setUnlockError("");
+              },
+            },
+            "Reset wallet",
+          ),
         ]),
       ]),
     ]);
   }
 
   if (walletState === "locked") {
-    return h("main", { className: "popup popup-dark auth-screen" }, [
+    return h("main", { className: "popup popup-dark auth-screen unlock-screen" }, [
       h("section", { className: "auth-hero", key: "auth-hero" }, [
         h("div", { className: "owl-logo", key: "logo" }, [
           h("img", {
@@ -442,17 +469,16 @@ export function PopupShell() {
             key: "logo-image",
           }),
         ]),
-        h("p", { className: "auth-title-mark", key: "mark" }, "HECATE"),
+        h(
+          "p",
+          { className: "auth-title-mark auth-title-mark-unlock", key: "mark" },
+          "HECATE",
+        ),
       ]),
-      h("section", { className: "auth-card", key: "unlock-card" }, [
+      h("section", { className: "auth-card unlock-card", key: "unlock-card" }, [
         h("h1", { className: "auth-title", key: "title" }, "Unlock Wallet"),
         h("p", { className: "auth-subtitle", key: "subtitle" }, [
-          "Wallet source: ",
-          walletOriginLabel,
-        ]),
-        h("p", { className: "auth-subtitle", key: "address-subtitle" }, [
-          "Address: ",
-          shortWalletAddress,
+          "Enter your password to continue.",
         ]),
         h("label", { className: "auth-field", key: "password-field" }, [
           h("span", { className: "auth-label", key: "label" }, "Password"),
@@ -509,7 +535,7 @@ export function PopupShell() {
             "button",
             {
               type: "button",
-              className: "secondary-button",
+              className: "reset-link-button",
               key: "reset",
               onClick: async () => {
                 await resetWallet();

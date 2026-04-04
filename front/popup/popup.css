@@ -5,6 +5,14 @@
   color: #e8edf5;
 }
 
+@font-face {
+  font-family: "Greek Freak";
+  src: url("../../styles/Greek-Freak.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -16,6 +24,7 @@ body {
   min-height: 600px;
   background: #050915;
   color: #e8edf5;
+  overflow-x: hidden;
 }
 
 .popup {
@@ -25,6 +34,7 @@ body {
   flex-direction: column;
   gap: 12px;
   background: #050915;
+  overflow-x: hidden;
 }
 
 .popup-dark {
@@ -43,6 +53,8 @@ body {
 
 .panel {
   padding: 14px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .panel-dark {
@@ -72,6 +84,16 @@ body {
 .auth-screen {
   justify-content: center;
   padding-top: 24px;
+}
+
+.unlock-screen {
+  justify-content: center;
+  padding-top: 14px;
+}
+
+.unlock-screen .owl-logo {
+  width: 82px;
+  height: 82px;
 }
 
 .auth-hero {
@@ -117,10 +139,36 @@ body {
   color: #f0f4ff;
 }
 
+.auth-title-mark-unlock {
+  font-family: "Greek Freak", Inter, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.04em;
+  font-size: 44px;
+  font-weight: 400;
+  color: #f5f8ff;
+  text-shadow: 0 2px 16px rgba(120, 150, 230, 0.14);
+  transform: none;
+  transform-origin: center;
+}
+
 .auth-card {
   padding: 18px;
   display: grid;
   gap: 12px;
+}
+
+.unlock-card {
+  gap: 9px;
+}
+
+.unlock-card .auth-title {
+  font-size: 28px;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  text-align: center;
+}
+
+.unlock-card .auth-subtitle {
+  font-size: 15px;
 }
 
 .auth-title {
@@ -368,6 +416,7 @@ body {
 .review-panel {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
 .review-header {
@@ -385,11 +434,18 @@ body {
   font-size: 13px;
   line-height: 1.45;
   color: #94a0be;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.review-form {
+  min-width: 0;
 }
 
 .review-field {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .review-field-label {
@@ -402,6 +458,8 @@ body {
 
 .review-input {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -426,6 +484,7 @@ body {
 .review-actions {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 .review-block {
@@ -434,6 +493,8 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #060c1b;
   color: #dce6ff;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .stage-placeholder {
@@ -469,11 +530,16 @@ body {
   font-size: 14px;
   line-height: 1.4;
   color: #e8edf5;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .send-panel {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .approval-box,
@@ -482,6 +548,8 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(76, 138, 255, 0.32);
   background: rgba(18, 31, 66, 0.6);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .approval-header {
@@ -537,6 +605,10 @@ body {
   margin: 5px 0 0;
   font-size: 14px;
   color: #e8edf5;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .flow-panel {
@@ -624,8 +696,25 @@ h2 {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.reset-link-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #8e9bb9;
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 2px 0 0;
+  cursor: pointer;
+}
+
+.reset-link-button:hover {
+  color: #b8c7ea;
+}
+
 .primary-button:disabled,
 .secondary-button:disabled,
+.reset-link-button:disabled,
 .icon-button:disabled,
 .action-tile:disabled {
   opacity: 0.5;
