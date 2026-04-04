@@ -94,7 +94,7 @@ The sponsors support.
 
 ### Current sponsor status (honest demo state)
 
-- Unlink: feasibility spikes were completed, but the current popup architecture hit a real SDK-loading blocker for a small change path, so Unlink is not integrated in this build.
+- Unlink: validated through a standalone script path (`scripts/unlink-smoke.mjs`) on Base Sepolia. This is intentionally outside popup integration.
 - Chainlink: not integrated in this MVP build.
 - Ledger: not integrated in this MVP build.
 - Current private send and approval behavior are local demo flows for presentation clarity.
@@ -163,6 +163,13 @@ set -a; source .env; set +a
 node scripts/unlink-smoke.mjs
 ```
 
+Minimal successful path:
+
+1. Set real `UNLINK_API_KEY` and `UNLINK_MNEMONIC`.
+2. Set a valid `UNLINK_RECIPIENT` (`unlink1...`).
+3. Ensure sender has private balance for `UNLINK_TOKEN`.
+4. Run `node scripts/unlink-smoke.mjs`.
+
 ### 5) Expected success output
 
 ```text
@@ -185,6 +192,13 @@ node scripts/unlink-smoke.mjs
 - `UNLINK_RECIPIENT must be an Unlink private address (unlink1...), got: ...`
 - `Invalid mnemonic`
 - `createUser failed: invalid or expired API key`
+
+### 7) Verified proof note (Base Sepolia)
+
+Successful real private transfer was observed with:
+
+- `txId`: `3375ea14-7b6a-4d95-b7de-41c46a034eda`
+- final status: `relayed`
 
 ## Development approach
 
