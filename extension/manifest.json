@@ -3,6 +3,7 @@
   "name": "Hecate",
   "version": "0.1.0",
   "description": "Privacy-first smart wallet MVP Chrome extension.",
+  "permissions": ["storage"],
   "icons": {
     "16": "icons/hecate-icon-16.png",
     "32": "icons/hecate-icon-32.png",

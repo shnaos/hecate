@@ -1,48 +1,15 @@
+import {
+  getWalletBootState,
+  createWalletFromNewMnemonic,
+  importWalletFromMnemonic,
+  unlockWallet,
+  lockWallet,
+  resetWallet,
+} from "./wallet/walletCore.js";
+import { InvalidPasswordError } from "./wallet/keystore.js";
+
 const React = window.React;
 const h = React.createElement;
-const POPUP_WALLET_STORAGE_KEY = "hecate:popup-wallet:v1";
-
-function readStoredWallet() {
-  try {
-    const raw = window.localStorage.getItem(POPUP_WALLET_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.version !== 1) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredWallet(record) {
-  window.localStorage.setItem(POPUP_WALLET_STORAGE_KEY, JSON.stringify(record));
-}
-
-function clearStoredWallet() {
-  window.localStorage.removeItem(POPUP_WALLET_STORAGE_KEY);
-}
-
-function bytesToHex(bytes) {
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function randomSaltHex() {
-  const salt = new Uint8Array(16);
-  window.crypto.getRandomValues(salt);
-  return bytesToHex(salt);
-}
-
-async function hashPassword(password, saltHex) {
-  const payload = new TextEncoder().encode(`${saltHex}:${password}`);
-  const digest = await window.crypto.subtle.digest("SHA-256", payload);
-  return bytesToHex(new Uint8Array(digest));
-}
 
 function probeRails({ walletState, recipient, amount, preferredRail }) {
   const normalizedRecipient = recipient.trim();
@@ -137,15 +104,17 @@ function createPrivateSendResult({ recipient, amount }) {
 
 export function PopupShell() {
   const hecateLogoSrc = "../../styles/hecate-logo.png";
-  const initialStoredWallet = readStoredWallet();
   const [activeScreen, setActiveScreen] = React.useState("home");
   const [preferredRail, setPreferredRail] = React.useState("private");
-  const [walletState, setWalletState] = React.useState(
-    initialStoredWallet ? "locked" : "empty",
-  );
-  const [walletOrigin, setWalletOrigin] = React.useState(
-    initialStoredWallet?.walletOrigin || null,
-  );
+  const [walletState, setWalletState] = React.useState("loading");
+  const [walletOrigin, setWalletOrigin] = React.useState(null);
+  const [walletAddress, setWalletAddress] = React.useState(null);
+  const [setupMode, setSetupMode] = React.useState("create");
+  const [setupPassword, setSetupPassword] = React.useState("");
+  const [setupMnemonic, setSetupMnemonic] = React.useState("");
+  const [setupError, setSetupError] = React.useState("");
+  const [setupBusy, setSetupBusy] = React.useState(false);
+  const [createdMnemonic, setCreatedMnemonic] = React.useState("");
   const [unlockPassword, setUnlockPassword] = React.useState("");
   const [unlockError, setUnlockError] = React.useState("");
   const [recipient, setRecipient] = React.useState("");
@@ -164,6 +133,10 @@ export function PopupShell() {
   const hasProbeResult = probeResult !== null;
   const canSendPrivate = decision.selectedRoute === "Private";
   const preferredRailLabel = preferredRail === "private" ? "Private" : "Public";
+  const shortWalletAddress =
+    walletAddress && walletAddress.length > 10
+      ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+      : "No account";
   const walletOriginLabel =
     walletOrigin === "create"
       ? "Created"
@@ -173,6 +146,33 @@ export function PopupShell() {
   const accountLabel = walletOrigin === "import" ? "Imported Account" : "Main Account";
   const recipientPreview = recipient.trim() || "Recipient will appear here";
   const amountPreview = amount.trim() || "Amount will appear here";
+
+  React.useEffect(() => {
+    let isCancelled = false;
+
+    const loadBootState = async () => {
+      try {
+        const bootState = await getWalletBootState();
+        if (isCancelled) {
+          return;
+        }
+        setWalletState(bootState.walletState);
+        setWalletOrigin(bootState.walletOrigin);
+        setWalletAddress(bootState.address);
+      } catch {
+        if (!isCancelled) {
+          setWalletState("empty");
+          setWalletOrigin(null);
+          setWalletAddress(null);
+        }
+      }
+    };
+
+    loadBootState();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   React.useEffect(() => {
     setProbeResult(null);
@@ -213,6 +213,19 @@ export function PopupShell() {
       ),
     ]);
 
+  if (walletState === "loading") {
+    return h("main", { className: "popup popup-dark auth-screen" }, [
+      h("section", { className: "auth-card", key: "booting" }, [
+        h("h1", { className: "auth-title", key: "title" }, "Loading wallet"),
+        h(
+          "p",
+          { className: "auth-subtitle", key: "subtitle" },
+          "Checking encrypted wallet state in chrome.storage.local.",
+        ),
+      ]),
+    ]);
+  }
+
   if (walletState === "empty") {
     return h("main", { className: "popup popup-dark auth-screen" }, [
       h("section", { className: "auth-hero", key: "auth-hero" }, [
@@ -231,51 +244,188 @@ export function PopupShell() {
         h(
           "p",
           { className: "auth-subtitle", key: "subtitle" },
-          "Set up wallet access before opening the home dashboard.",
+          "Real mnemonic-backed setup with encrypted keystore persistence.",
+        ),
+        h("div", { className: "route-toggle", key: "setup-mode-toggle" }, [
+          h(
+            "button",
+            {
+              type: "button",
+              className: `route-toggle-option ${setupMode === "create" ? "route-toggle-option-active" : ""}`,
+              key: "setup-create",
+              onClick: () => {
+                setSetupMode("create");
+                setSetupError("");
+              },
+            },
+            "Create",
+          ),
+          h(
+            "button",
+            {
+              type: "button",
+              className: `route-toggle-option ${setupMode === "import" ? "route-toggle-option-active" : ""}`,
+              key: "setup-import",
+              onClick: () => {
+                setSetupMode("import");
+                setSetupError("");
+              },
+            },
+            "Import",
+          ),
+        ]),
+        setupMode === "create"
+          ? h("label", { className: "auth-field", key: "create-password-field" }, [
+              h("span", { className: "auth-label", key: "label" }, "New password"),
+              h("input", {
+                className: "auth-input",
+                type: "password",
+                placeholder: "At least 8 characters",
+                value: setupPassword,
+                onChange: (event) => {
+                  setSetupPassword(event.target.value);
+                  if (setupError) {
+                    setSetupError("");
+                  }
+                },
+                key: "input",
+              }),
+            ])
+          : h(React.Fragment, { key: "import-fields" }, [
+              h("label", { className: "auth-field", key: "mnemonic-field" }, [
+                h("span", { className: "auth-label", key: "label" }, "Recovery phrase"),
+                h("textarea", {
+                  className: "auth-input auth-textarea",
+                  rows: 3,
+                  placeholder: "Enter 12 or 24 words",
+                  value: setupMnemonic,
+                  onChange: (event) => {
+                    setSetupMnemonic(event.target.value);
+                    if (setupError) {
+                      setSetupError("");
+                    }
+                  },
+                  key: "textarea",
+                }),
+              ]),
+              h("label", { className: "auth-field", key: "import-password-field" }, [
+                h("span", { className: "auth-label", key: "label" }, "New password"),
+                h("input", {
+                  className: "auth-input",
+                  type: "password",
+                  placeholder: "At least 8 characters",
+                  value: setupPassword,
+                  onChange: (event) => {
+                    setSetupPassword(event.target.value);
+                    if (setupError) {
+                      setSetupError("");
+                    }
+                  },
+                  key: "input",
+                }),
+              ]),
+            ]),
+        createdMnemonic
+          ? h("div", { className: "mnemonic-box", key: "mnemonic-box" }, [
+              h("p", { className: "auth-label", key: "mnemonic-label" }, "Save this phrase"),
+              h("p", { className: "mnemonic-value", key: "mnemonic" }, createdMnemonic),
+              h(
+                "p",
+                { className: "auth-subtitle", key: "mnemonic-help" },
+                "This recovery phrase is required to restore the wallet.",
+              ),
+              h(
+                "button",
+                {
+                  type: "button",
+                  className: "primary-button",
+                  key: "continue-to-lock",
+                  onClick: () => {
+                    setCreatedMnemonic("");
+                    setSetupPassword("");
+                    setSetupMnemonic("");
+                    setWalletState("locked");
+                    setUnlockPassword("");
+                    setUnlockError("");
+                  },
+                },
+                "I saved it, continue",
+              ),
+            ])
+          : null,
+        setupError
+          ? h("p", { className: "auth-error", key: "setup-error" }, setupError)
+          : null,
+        h(
+          "p",
+          { className: "auth-subtitle", key: "storage-note" },
+          "Keystore is encrypted and persisted in chrome.storage.local.",
         ),
         h("div", { className: "auth-actions", key: "actions" }, [
-          h(
-            "button",
-            {
-              type: "button",
-              className: "primary-button",
-              key: "create",
-              onClick: () => {
-                writeStoredWallet({
-                  version: 1,
-                  walletOrigin: "create",
-                  passwordSaltHex: null,
-                  passwordHashHex: null,
-                });
-                setWalletOrigin("create");
-                setWalletState("locked");
-                setUnlockPassword("");
-                setUnlockError("");
-              },
-            },
-            "Create wallet",
-          ),
-          h(
-            "button",
-            {
-              type: "button",
-              className: "secondary-button",
-              key: "import",
-              onClick: () => {
-                writeStoredWallet({
-                  version: 1,
-                  walletOrigin: "import",
-                  passwordSaltHex: null,
-                  passwordHashHex: null,
-                });
-                setWalletOrigin("import");
-                setWalletState("locked");
-                setUnlockPassword("");
-                setUnlockError("");
-              },
-            },
-            "Import wallet",
-          ),
+          setupMode === "create"
+            ? h(
+                "button",
+                {
+                  type: "button",
+                  className: "primary-button",
+                  disabled:
+                    setupBusy ||
+                    setupPassword.trim().length < 8 ||
+                    Boolean(createdMnemonic),
+                  key: "create",
+                  onClick: async () => {
+                    try {
+                      setSetupBusy(true);
+                      const result = await createWalletFromNewMnemonic({
+                        password: setupPassword,
+                      });
+                      setWalletOrigin(result.walletOrigin);
+                      setWalletAddress(result.address);
+                      setCreatedMnemonic(result.mnemonic);
+                      setSetupError("");
+                    } catch (error) {
+                      setSetupError(error instanceof Error ? error.message : "Create failed");
+                    } finally {
+                      setSetupBusy(false);
+                    }
+                  },
+                },
+                setupBusy ? "Creating..." : "Create wallet",
+              )
+            : h(
+                "button",
+                {
+                  type: "button",
+                  className: "primary-button",
+                  disabled:
+                    setupBusy ||
+                    setupPassword.trim().length < 8 ||
+                    setupMnemonic.trim().length === 0,
+                  key: "import",
+                  onClick: async () => {
+                    try {
+                      setSetupBusy(true);
+                      const result = await importWalletFromMnemonic({
+                        password: setupPassword,
+                        mnemonic: setupMnemonic,
+                      });
+                      setWalletOrigin(result.walletOrigin);
+                      setWalletAddress(result.address);
+                      setSetupPassword("");
+                      setSetupMnemonic("");
+                      setSetupError("");
+                      setWalletState("locked");
+                      setUnlockPassword("");
+                      setUnlockError("");
+                    } catch (error) {
+                      setSetupError(error instanceof Error ? error.message : "Import failed");
+                    } finally {
+                      setSetupBusy(false);
+                    }
+                  },
+                },
+                setupBusy ? "Importing..." : "Import wallet",
+              ),
         ]),
       ]),
     ]);
@@ -299,6 +449,10 @@ export function PopupShell() {
         h("p", { className: "auth-subtitle", key: "subtitle" }, [
           "Wallet source: ",
           walletOriginLabel,
+        ]),
+        h("p", { className: "auth-subtitle", key: "address-subtitle" }, [
+          "Address: ",
+          shortWalletAddress,
         ]),
         h("label", { className: "auth-field", key: "password-field" }, [
           h("span", { className: "auth-label", key: "label" }, "Password"),
@@ -328,40 +482,25 @@ export function PopupShell() {
               disabled: unlockPassword.trim().length === 0,
               key: "unlock",
               onClick: async () => {
-                const password = unlockPassword.trim();
-                const storedWallet = readStoredWallet();
-                if (!storedWallet) {
-                  setWalletState("empty");
-                  setWalletOrigin(null);
-                  setUnlockError("No wallet found. Create or import one first.");
-                  return;
-                }
-
-                if (!storedWallet.passwordSaltHex || !storedWallet.passwordHashHex) {
-                  const passwordSaltHex = randomSaltHex();
-                  const passwordHashHex = await hashPassword(password, passwordSaltHex);
-                  writeStoredWallet({
-                    ...storedWallet,
-                    passwordSaltHex,
-                    passwordHashHex,
+                try {
+                  const result = await unlockWallet({
+                    password: unlockPassword,
                   });
                   setWalletState("unlocked");
+                  setWalletAddress(result.address);
+                  setWalletOrigin(result.walletOrigin);
                   setUnlockPassword("");
                   setUnlockError("");
                   setActiveScreen("home");
-                  return;
+                } catch (error) {
+                  if (error instanceof InvalidPasswordError) {
+                    setUnlockError("Invalid password");
+                    return;
+                  }
+                  setUnlockError(
+                    error instanceof Error ? error.message : "Unlock failed",
+                  );
                 }
-
-                const attemptHashHex = await hashPassword(password, storedWallet.passwordSaltHex);
-                if (attemptHashHex !== storedWallet.passwordHashHex) {
-                  setUnlockError("Invalid password");
-                  return;
-                }
-
-                setWalletState("unlocked");
-                setUnlockPassword("");
-                setUnlockError("");
-                setActiveScreen("home");
               },
             },
             "Unlock",
@@ -372,10 +511,15 @@ export function PopupShell() {
               type: "button",
               className: "secondary-button",
               key: "reset",
-              onClick: () => {
-                clearStoredWallet();
+              onClick: async () => {
+                await resetWallet();
                 setWalletState("empty");
                 setWalletOrigin(null);
+                setWalletAddress(null);
+                setCreatedMnemonic("");
+                setSetupPassword("");
+                setSetupMnemonic("");
+                setSetupError("");
                 setUnlockPassword("");
                 setUnlockError("");
               },
@@ -399,13 +543,36 @@ export function PopupShell() {
                 key: "topbar-logo",
               }),
               h("p", { className: "wallet-topbar-brand", key: "brand" }, "Hecate"),
-              h("p", { className: "wallet-topbar-account", key: "account" }, accountLabel),
+              h(
+                "p",
+                { className: "wallet-topbar-account", key: "account" },
+                `${accountLabel} · ${shortWalletAddress}`,
+              ),
             ]),
-            h(
-              "p",
-              { className: "wallet-topbar-chip", key: "chip" },
-              `${preferredRailLabel} mode`,
-            ),
+            h("div", { className: "wallet-topbar-actions", key: "actions" }, [
+              h(
+                "p",
+                { className: "wallet-topbar-chip", key: "chip" },
+                `${preferredRailLabel} mode`,
+              ),
+              h(
+                "button",
+                {
+                  type: "button",
+                  className: "icon-button",
+                  key: "lock-wallet",
+                  onClick: () => {
+                    lockWallet();
+                    setWalletState("locked");
+                    setActiveScreen("home");
+                    setProbeResult(null);
+                    setSendState("idle");
+                    setSendResult(null);
+                  },
+                },
+                "Lock",
+              ),
+            ]),
           ]),
           h("section", { className: "balance-card", key: "balance" }, [
             h("p", { className: "balance-label", key: "label" }, "Total balance"),
@@ -462,7 +629,7 @@ export function PopupShell() {
                 },
                 "Back",
               ),
-              h("p", { className: "wallet-topbar-account", key: "account" }, "0x4ebc...0c0e"),
+              h("p", { className: "wallet-topbar-account", key: "account" }, shortWalletAddress),
             ]),
             h("p", { className: "wallet-topbar-brand", key: "title" }, "Send"),
           ]),

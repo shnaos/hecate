@@ -165,6 +165,28 @@ body {
   color: #6f7b98;
 }
 
+.auth-textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.mnemonic-box {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(143, 179, 255, 0.35);
+  background: rgba(18, 31, 66, 0.55);
+  display: grid;
+  gap: 8px;
+}
+
+.mnemonic-value {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #dbe7ff;
+  word-break: break-word;
+}
+
 .auth-actions {
   display: grid;
   gap: 10px;
@@ -214,6 +236,12 @@ body {
   font-weight: 700;
   letter-spacing: 0.04em;
   white-space: nowrap;
+}
+
+.wallet-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .balance-card {
