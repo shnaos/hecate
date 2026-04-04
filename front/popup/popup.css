@@ -192,6 +192,72 @@ h1 {
   color: #4b3d2f;
 }
 
+.route-choice-panel,
+.send-entry-panel,
+.send-topbar-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.rail-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rail-option {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(122, 91, 57, 0.24);
+  background: rgba(255, 252, 246, 0.92);
+  color: #3d2f21;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rail-option-active {
+  border-color: rgba(32, 25, 17, 0.62);
+  background: #201911;
+  color: #f8f2e8;
+}
+
+.send-entry-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(122, 91, 57, 0.08);
+}
+
+.send-entry-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #201911;
+}
+
+.send-entry-copy {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b3d2f;
+}
+
+.send-entry-row,
+.send-topbar-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.send-screen-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #201911;
+}
+
 .wallet-panel {
   display: grid;
   gap: 14px;
