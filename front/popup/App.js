@@ -93,6 +93,7 @@ function createPrivateSendResult({ recipient, amount }) {
 }
 
 export function PopupShell() {
+  const hecateLogoSrc = "../../styles/hecate-logo.png";
   const [activeScreen, setActiveScreen] = React.useState("home");
   const [preferredRail, setPreferredRail] = React.useState("private");
   const [walletState, setWalletState] = React.useState("empty");
@@ -165,7 +166,14 @@ export function PopupShell() {
   if (walletState === "empty") {
     return h("main", { className: "popup popup-dark auth-screen" }, [
       h("section", { className: "auth-hero", key: "auth-hero" }, [
-        h("div", { className: "owl-logo", key: "logo" }, "🦉"),
+        h("div", { className: "owl-logo", key: "logo" }, [
+          h("img", {
+            className: "hecate-logo-image",
+            src: hecateLogoSrc,
+            alt: "Hecate logo",
+            key: "logo-image",
+          }),
+        ]),
         h("p", { className: "auth-title-mark", key: "mark" }, "HECATE"),
       ]),
       h("section", { className: "auth-card", key: "auth-card" }, [
@@ -210,7 +218,14 @@ export function PopupShell() {
   if (walletState === "locked") {
     return h("main", { className: "popup popup-dark auth-screen" }, [
       h("section", { className: "auth-hero", key: "auth-hero" }, [
-        h("div", { className: "owl-logo", key: "logo" }, "🦉"),
+        h("div", { className: "owl-logo", key: "logo" }, [
+          h("img", {
+            className: "hecate-logo-image",
+            src: hecateLogoSrc,
+            alt: "Hecate logo",
+            key: "logo-image",
+          }),
+        ]),
         h("p", { className: "auth-title-mark", key: "mark" }, "HECATE"),
       ]),
       h("section", { className: "auth-card", key: "unlock-card" }, [
@@ -270,6 +285,12 @@ export function PopupShell() {
       ? h(React.Fragment, { key: "home" }, [
           h("section", { className: "wallet-topbar", key: "topbar" }, [
             h("div", { className: "wallet-topbar-left", key: "left" }, [
+              h("img", {
+                className: "wallet-topbar-logo",
+                src: hecateLogoSrc,
+                alt: "Hecate logo",
+                key: "topbar-logo",
+              }),
               h("p", { className: "wallet-topbar-brand", key: "brand" }, "Hecate"),
               h("p", { className: "wallet-topbar-account", key: "account" }, accountLabel),
             ]),

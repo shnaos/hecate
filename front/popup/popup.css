@@ -86,9 +86,27 @@ body {
   height: 72px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 20%, #1e2b4f, #0b1120 65%);
-  font-size: 36px;
+  border-radius: 16px;
+  background: rgba(9, 16, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.hecate-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.wallet-topbar-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  object-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0b1120;
 }
 
 .auth-title-mark {
