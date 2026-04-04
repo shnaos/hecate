@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Hecate",
+  "version": "0.1.0",
+  "description": "Privacy-first smart wallet MVP Chrome extension.",
+  "action": {
+    "default_title": "Hecate",
+    "default_popup": "front/popup/popup.html"
+  }
+}
