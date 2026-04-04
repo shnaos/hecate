@@ -39,6 +39,67 @@ body {
     rgba(255, 252, 246, 0.88);
 }
 
+.brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.brand-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-mark {
+  margin: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #201911;
+  color: #f8f2e8;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.brand-meta {
+  display: grid;
+  gap: 2px;
+}
+
+.brand-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #201911;
+}
+
+.brand-subtitle {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #5b4834;
+}
+
+.brand-badge {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(32, 25, 17, 0.08);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #3d2f21;
+  white-space: nowrap;
+}
+
 .eyebrow,
 .panel-label {
   margin: 0 0 8px;
@@ -488,5 +549,10 @@ h2 {
 @media (max-width: 420px) {
   .wallet-meta {
     grid-template-columns: 1fr;
+  }
+
+  .brand-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

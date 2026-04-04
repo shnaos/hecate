@@ -92,6 +92,13 @@ Hecate may align with sponsor tracks where that strengthens the MVP narrative, e
 But the product leads.
 The sponsors support.
 
+### Current sponsor status (honest demo state)
+
+- Unlink: feasibility spikes were completed, but the current popup architecture hit a real SDK-loading blocker for a small change path, so Unlink is not integrated in this build.
+- Chainlink: not integrated in this MVP build.
+- Ledger: not integrated in this MVP build.
+- Current private send and approval behavior are local demo flows for presentation clarity.
+
 ## Development approach
 
 This repository is built as a greenfield hackathon MVP.

@@ -108,25 +108,21 @@ export function PopupShell() {
       badge: "No wallet yet",
       title: "Set up your wallet",
       copy:
-        "Choose how this MVP wallet should begin. Wallet setup stays local to the popup for now.",
+        "Choose Create or Import to start the demo wallet state.",
       detail:
-        "Create starts a new wallet path. Import represents bringing an existing wallet into Hecate.",
+        "This state is local to the popup and keeps the MVP demo explicit.",
     },
     locked: {
       badge: "Locked wallet",
       title: "Wallet is ready but locked",
-      copy:
-        "Your wallet is available in the popup, but it stays locked until you unlock it.",
-      detail:
-        "Unlock first so the review, probing, and approval flow can begin.",
+      copy: "Wallet context exists, but actions stay blocked until you unlock.",
+      detail: "Unlock to continue through review, probe, and final approval.",
     },
     unlocked: {
       badge: "Unlocked wallet",
       title: "Wallet is ready for the demo flow",
-      copy:
-        "The wallet is active in this popup and ready for review, probing, and approval.",
-      detail:
-        "This is still a local MVP wallet state. The demo flow stays explicit and user-controlled.",
+      copy: "Wallet context is active and ready for the demo flow.",
+      detail: "State remains local to this popup and user approval still gates execution.",
     },
   };
 
@@ -186,8 +182,8 @@ export function PopupShell() {
       detail: sendResult
         ? "The private send result is visible and the happy path is complete."
         : nextStepReady
-          ? "The route decision is visible and the approval step can follow."
-          : "Unlock the wallet, draft the transfer, and run probing first.",
+          ? "Decision is visible. Final approval can now be opened."
+          : "Unlock wallet, draft transfer, then run route probe.",
     },
   ];
 
@@ -202,7 +198,21 @@ export function PopupShell() {
 
   return h("main", { className: "popup" }, [
     h("section", { className: "hero", key: "hero" }, [
-      h("p", { className: "eyebrow", key: "eyebrow" }, "Privacy-first wallet MVP"),
+      h("div", { className: "brand-header", key: "brand-header" }, [
+        h("div", { className: "brand-identity", key: "identity" }, [
+          h("p", { className: "brand-mark", key: "mark" }, "H"),
+          h("div", { className: "brand-meta", key: "meta" }, [
+            h("p", { className: "brand-name", key: "name" }, "Hecate"),
+            h(
+              "p",
+              { className: "brand-subtitle", key: "subtitle" },
+              "Privacy-first wallet demo",
+            ),
+          ]),
+        ]),
+        h("p", { className: "brand-badge", key: "badge" }, "Hackathon MVP"),
+      ]),
+      h("p", { className: "eyebrow", key: "eyebrow" }, "Live demo flow"),
       h(
         "h1",
         { key: "headline" },
@@ -211,16 +221,16 @@ export function PopupShell() {
       h(
         "p",
         { className: "tagline", key: "tagline" },
-        "Review the draft, explain the route, and execute only after a clear user approval.",
+        "Review the draft, explain the selected route, then execute only after final approval.",
       ),
     ]),
     h("section", { className: "panel status-panel", key: "status" }, [
       h("p", { className: "panel-label", key: "label" }, "MVP status"),
       h("p", { className: "status-intro", key: "intro" }, [
-        "A quick check of the current demo state. ",
+        "Use this checklist while narrating the demo. ",
         nextStepReady
-          ? "The flow now moves cleanly from review into explanation."
-          : "A wallet or probing step is still needed before the happy path is ready.",
+          ? "Review and explanation are ready, so approval can follow."
+          : "Start by unlocking the wallet, drafting the transfer, and probing routes.",
       ]),
       h(
         "div",
@@ -357,7 +367,7 @@ export function PopupShell() {
         "p",
         { className: "review-intro", key: "intro" },
         reviewReady
-          ? "Draft one transfer here, then probe routes so Hecate can explain the selected path."
+          ? "Draft recipient and amount, then probe routes to produce a clear decision."
           : "Unlock the wallet before drafting a transfer.",
       ),
       h("div", { className: "review-form", key: "form" }, [
@@ -366,7 +376,7 @@ export function PopupShell() {
           h("input", {
             className: "review-input",
             type: "text",
-            placeholder: "0x..., ENS, or demo recipient",
+            placeholder: "0x... or demo recipient",
             value: recipient,
             disabled: !reviewReady,
             onChange: (event) => setRecipient(event.target.value),
@@ -410,7 +420,7 @@ export function PopupShell() {
           "p",
           { className: "review-probe-note", key: "probe-note" },
           reviewReady
-            ? "This MVP probe uses simple local rules from the current draft. It does not execute anything."
+            ? "Probe uses local MVP rules from this draft. It does not execute a transfer."
             : "Unlock the wallet and enter a draft before route probing becomes available.",
         ),
       ]),
@@ -478,8 +488,8 @@ export function PopupShell() {
           "p",
           { className: "review-note", key: "note" },
           probeResult
-            ? "The route decision is ready. The action still requires final approval before the demo send can run."
-            : "Probe routes to fill in the decision summary.",
+            ? "Decision is ready. Final approval is still required before execution."
+            : "Run route probe to populate this decision summary.",
         ),
       ]),
       h("div", { className: "send-panel", key: "send-panel" }, [
@@ -500,12 +510,12 @@ export function PopupShell() {
                 : "Private route required",
           ),
         ]),
-      h(
-        "p",
-        { className: "review-intro", key: "intro" },
-        canSendPrivate
-            ? "A private route is selected for this draft. Open the approval step to continue."
-            : "Private send is only available when the selected route is Private.",
+        h(
+          "p",
+          { className: "review-intro", key: "intro" },
+          canSendPrivate
+            ? "Private route selected. Open final approval to keep user control before execution."
+            : "This demo executes only when the selected route is Private.",
         ),
         sendState === "confirm"
           ? h("div", { className: "approval-box", key: "confirm-box" }, [
@@ -524,12 +534,12 @@ export function PopupShell() {
               h(
                 "p",
                 { className: "confirm-copy", key: "copy" },
-                "This is the final user approval step before the private transfer can run. The action only proceeds if you approve it here.",
+                "This is the final approval step before execution. Nothing runs until you approve.",
               ),
               h(
                 "p",
                 { className: "approval-note", key: "note" },
-                "This MVP keeps the approval step honest. A future wallet or Ledger-backed signer can live here later, but no hardware approval is connected now.",
+                "This MVP approval boundary is local and explicit. No Unlink, Chainlink, or Ledger integration is active in this build.",
               ),
               h("dl", { className: "confirm-summary", key: "summary" }, [
                 h(React.Fragment, { key: "route" }, [
@@ -586,7 +596,7 @@ export function PopupShell() {
               h(
                 "p",
                 { className: "result-copy", key: "copy" },
-                "The demo private transfer is being prepared inside the popup.",
+                "Executing the local demo private send inside the popup.",
               ),
             ])
           : null,
@@ -631,8 +641,8 @@ export function PopupShell() {
                 "p",
                 { className: "review-probe-note", key: "send-note" },
                 canSendPrivate
-                  ? "Review the decision above, open approval, then trigger the demo private send."
-                  : "Probe the draft until the selected route is Private before the approval boundary can open.",
+                  ? "Narration: review decision, open approval, then approve and run."
+                  : "Route must be Private before final approval can open.",
               ),
             ])
           : null,
@@ -647,7 +657,7 @@ export function PopupShell() {
       h(
         "p",
         { className: "flow-intro", key: "intro" },
-        "The demo is easiest to follow in this order: unlock, review, probe, approve, then show the result.",
+        "Live script: unlock wallet, draft transfer, probe routes, approve, then show result.",
       ),
       h("div", { className: "flow-grid", key: "grid" }, [
         h("article", { className: "flow-step", key: "review" }, [
@@ -656,7 +666,7 @@ export function PopupShell() {
           h(
             "p",
             { key: "copy" },
-            "Draft the transfer before any action can run.",
+            "Set recipient and amount for a single transfer draft.",
           ),
         ]),
         h("article", { className: "flow-step", key: "explain" }, [
@@ -665,7 +675,7 @@ export function PopupShell() {
           h(
             "p",
             { key: "copy" },
-            "Probe routes and show the selected path in plain language.",
+            "Run probing and show selected route, reason, and fallback.",
           ),
         ]),
         h("article", { className: "flow-step", key: "execute" }, [
@@ -674,7 +684,7 @@ export function PopupShell() {
           h(
             "p",
             { key: "copy" },
-            "Open final approval, then run the demo private send.",
+            "Open final approval, keep user control, then run and show result.",
           ),
         ]),
       ]),
@@ -682,12 +692,12 @@ export function PopupShell() {
     h("section", { className: "panel", key: "demo-summary" }, [
       h("p", { className: "panel-label", key: "label" }, "Demo summary"),
       h("ul", { className: "status-list", key: "list" }, [
-        h("li", { key: "wallet" }, "Wallet setup and unlock are visible at the top of the flow."),
-        h("li", { key: "status" }, "Status, review, probing, decision, approval, and result now read as one path."),
+        h("li", { key: "wallet" }, "Wallet setup and unlock appear first, so demo readiness is obvious."),
+        h("li", { key: "status" }, "Status, review, probing, decision, approval, and result read as one narrative."),
         h(
           "li",
           { key: "decision" },
-          "All current send behavior remains local and explicit for the MVP demo.",
+          "Current execution is local MVP behavior only; no live sponsor integration is claimed.",
         ),
       ]),
     ]),
