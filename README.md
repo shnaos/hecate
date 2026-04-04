@@ -99,6 +99,56 @@ The sponsors support.
 - Ledger: not integrated in this MVP build.
 - Current private send and approval behavior are local demo flows for presentation clarity.
 
+## Sponsor test runbook
+
+### Unlink smoke script (Base Sepolia)
+
+This repository includes a standalone Unlink smoke script for sponsor review:
+
+- `scripts/unlink-smoke.mjs`
+
+The script does not use the popup. It performs an env-driven private transfer flow and polls final status.
+
+Required environment variables:
+
+- `UNLINK_ENGINE_URL`
+- `UNLINK_API_KEY`
+- `UNLINK_MNEMONIC`
+- `UNLINK_RECIPIENT` (must be an `unlink1...` address)
+- `UNLINK_TOKEN`
+- `UNLINK_AMOUNT`
+
+Optional polling overrides:
+
+- `UNLINK_POLL_INTERVAL_MS` (default `4000`)
+- `UNLINK_POLL_TIMEOUT_MS` (default `180000`)
+
+Example commands:
+
+```bash
+npm install
+
+export UNLINK_ENGINE_URL="https://<engine-for-base-sepolia>"
+export UNLINK_API_KEY="<api-key>"
+export UNLINK_MNEMONIC="<mnemonic>"
+export UNLINK_RECIPIENT="unlink1..."
+export UNLINK_TOKEN="USDC"
+export UNLINK_AMOUNT="1000000"
+
+node scripts/unlink-smoke.mjs
+```
+
+Expected console flow:
+
+- `Starting Unlink smoke test`
+- `Client created`
+- `Sender registration ready`
+- `Transfer submitted: txId=... status=...`
+- `Final status: txId=... status=...`
+- `DONE`
+
+If credentials or network configuration are incorrect, the script exits with a clear error message.
+
 ## Development approach
 
 This repository is built as a greenfield hackathon MVP.
