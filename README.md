@@ -99,55 +99,92 @@ The sponsors support.
 - Ledger: not integrated in this MVP build.
 - Current private send and approval behavior are local demo flows for presentation clarity.
 
-## Sponsor test runbook
+## Unlink setup for first run
 
-### Unlink smoke script (Base Sepolia)
-
-This repository includes a standalone Unlink smoke script for sponsor review:
+This repository includes one standalone sponsor-test script:
 
 - `scripts/unlink-smoke.mjs`
 
-The script does not use the popup. It performs an env-driven private transfer flow and polls final status.
+The script runs outside the popup and performs:
 
-Required environment variables:
+1. Unlink client setup
+2. sender registration
+3. one private transfer
+4. final status polling
+
+### 1) Get prerequisites (manual, outside this repo)
+
+1. Create or access your Unlink account and obtain:
+   - API key
+   - mnemonic for the sender Unlink account
+2. Use a Base Sepolia-compatible Unlink engine URL from the sponsor/docs.
+3. Ensure the sender account has private token balance to transfer.
+   - If needed, use Unlink funding/deposit/faucet steps outside this repo.
+
+### 2) Prepare environment
+
+Copy `.env.example` and fill values:
+
+```bash
+cp .env.example .env
+```
+
+Required env vars:
 
 - `UNLINK_ENGINE_URL`
 - `UNLINK_API_KEY`
 - `UNLINK_MNEMONIC`
 - `UNLINK_RECIPIENT` (must be an `unlink1...` address)
-- `UNLINK_TOKEN`
-- `UNLINK_AMOUNT`
+- `UNLINK_TOKEN` (ERC-20 token address)
+- `UNLINK_AMOUNT` (smallest unit for that token)
 
-Optional polling overrides:
+Optional env vars:
 
 - `UNLINK_POLL_INTERVAL_MS` (default `4000`)
 - `UNLINK_POLL_TIMEOUT_MS` (default `180000`)
 
-Example commands:
+### 3) Obtain a valid `unlink1...` recipient
+
+Use one of these:
+
+1. Recipient from another Unlink user.
+2. A second mnemonic you control, then derive its Unlink address:
+
+```bash
+UNLINK_MNEMONIC="<recipient-mnemonic>" \
+node --input-type=module -e "import { unlinkAccount } from '@unlink-xyz/sdk'; const keys = await unlinkAccount.fromMnemonic({ mnemonic: process.env.UNLINK_MNEMONIC }).getAccountKeys(); console.log(keys.address);"
+```
+
+### 4) Run the script
 
 ```bash
 npm install
-
-export UNLINK_ENGINE_URL="https://<engine-for-base-sepolia>"
-export UNLINK_API_KEY="<api-key>"
-export UNLINK_MNEMONIC="<mnemonic>"
-export UNLINK_RECIPIENT="unlink1..."
-export UNLINK_TOKEN="USDC"
-export UNLINK_AMOUNT="1000000"
-
+set -a; source .env; set +a
 node scripts/unlink-smoke.mjs
 ```
 
-Expected console flow:
+### 5) Expected success output
 
-- `Starting Unlink smoke test`
-- `Client created`
-- `Sender registration ready`
-- `Transfer submitted: txId=... status=...`
-- `Final status: txId=... status=...`
-- `DONE`
+```text
+[unlink-smoke] Starting Unlink smoke test
+[unlink-smoke] Config loaded
+[unlink-smoke] Client created
+[unlink-smoke] Sender address: unlink1...
+[unlink-smoke] Ensuring sender registration
+[unlink-smoke] Sender registration ready
+[unlink-smoke] Submitting private transfer
+[unlink-smoke] Transfer submitted: txId=... status=...
+[unlink-smoke] Polling final transaction status
+[unlink-smoke] Final status: txId=... status=...
+[unlink-smoke] DONE
+```
 
-If credentials or network configuration are incorrect, the script exits with a clear error message.
+### 6) Most common first errors
+
+- `Missing required env var: UNLINK_ENGINE_URL`
+- `UNLINK_RECIPIENT must be an Unlink private address (unlink1...), got: ...`
+- `Invalid mnemonic`
+- `createUser failed: invalid or expired API key`
 
 ## Development approach
 
