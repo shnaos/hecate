@@ -202,6 +202,160 @@ h1 {
   gap: 10px;
 }
 
+.review-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.review-intro,
+.review-note,
+.review-probe-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b3d2f;
+}
+
+.review-form {
+  display: grid;
+  gap: 12px;
+}
+
+.review-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.send-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.review-field {
+  display: grid;
+  gap: 6px;
+}
+
+.review-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7a5b39;
+}
+
+.review-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(122, 91, 57, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 252, 246, 0.9);
+  color: #201911;
+  font: inherit;
+}
+
+.review-input::placeholder {
+  color: rgba(75, 61, 47, 0.62);
+}
+
+.review-input:disabled {
+  background: rgba(122, 91, 57, 0.08);
+  color: rgba(75, 61, 47, 0.72);
+  cursor: not-allowed;
+}
+
+.review-input:focus-visible {
+  outline: 2px solid #7a5b39;
+  outline-offset: 2px;
+}
+
+.review-block {
+  padding: 14px;
+  border-radius: 18px;
+  background: #201911;
+  color: #f8f2e8;
+}
+
+.review-block-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.review-summary {
+  margin: 14px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.review-summary dt {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(248, 242, 232, 0.68);
+}
+
+.review-summary dd {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #f8f2e8;
+}
+
+.confirm-box,
+.result-box {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(122, 91, 57, 0.08);
+}
+
+.confirm-title,
+.result-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #201911;
+}
+
+.confirm-copy,
+.result-copy {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b3d2f;
+}
+
+.confirm-summary {
+  margin: 14px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.confirm-summary dt {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a5b39;
+}
+
+.confirm-summary dd {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #201911;
+}
+
 .flow-grid {
   display: grid;
   gap: 10px;
@@ -273,6 +427,15 @@ h2 {
 .secondary-button:focus-visible {
   outline: 2px solid #7a5b39;
   outline-offset: 2px;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  background: rgba(122, 91, 57, 0.12);
+  color: rgba(61, 47, 33, 0.64);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @media (max-width: 420px) {
