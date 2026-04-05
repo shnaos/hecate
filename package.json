@@ -2,9 +2,12 @@
   "name": "hecate",
   "private": true,
   "scripts": {
-    "build:unlink-exec": "node runtime/unlink-exec/build.mjs"
+    "build:unlink-exec": "node runtime/unlink-exec/build.mjs",
+    "smoke:ledger-speculos": "node scripts/ledger-speculos-smoke.mjs"
   },
   "dependencies": {
+    "@ledgerhq/hw-app-eth": "^7.6.2",
+    "@ledgerhq/hw-transport-node-speculos": "^6.33.1",
     "@unlink-xyz/sdk": "^0.0.2-canary.0",
     "bip39": "^3.1.0",
     "ethers": "^6.15.0",

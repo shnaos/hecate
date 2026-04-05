@@ -1,0 +1,23 @@
+{
+  "runId": "ledger-speculos-1775354177232",
+  "timestamp": "2026-04-05T01:56:17.231Z",
+  "status": "error",
+  "error": "connect ECONNREFUSED 127.0.0.1:40000",
+  "speculos": {
+    "host": "127.0.0.1",
+    "apduPort": 40000,
+    "buttonPort": 5001
+  },
+  "derivationPath": "44'/60'/0'/0/0",
+  "payload": "HECATE_APPROVAL_V1|route=private|recipient=unlink1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq|amount=1|token=0x7501de8ea37a21e20e6e65947d2ecab0e9f061a7|network=base-sepolia|nonce=1",
+  "payloadHash": "0xff715c797a393c6aa385a5d88e748818a092a3a7022394b348cb5d8e54852fb7",
+  "signature": null,
+  "recoveredAddress": null,
+  "expectedAddress": "0x0000000000000000000000000000000000000000",
+  "ledgerAddress": null,
+  "addressesMatch": false,
+  "metadata": {
+    "flow": "hecate-send-approval",
+    "route": "private"
+  }
+}

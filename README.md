@@ -96,7 +96,7 @@ The sponsors support.
 
 - Unlink: validated through a standalone script path (`scripts/unlink-smoke.mjs`) on Base Sepolia. This is intentionally outside popup integration.
 - Chainlink: not integrated in this MVP build.
-- Ledger: not integrated in this MVP build.
+- Ledger: Speculos smoke proof path added (`scripts/ledger-speculos-smoke.mjs`) with proof artifact output (`artifacts/ledger-proof.json`).
 - Current private send and approval behavior are local demo flows for presentation clarity.
 
 ## Unlink setup for first run
@@ -199,6 +199,82 @@ Successful real private transfer was observed with:
 
 - `txId`: `3375ea14-7b6a-4d95-b7de-41c46a034eda`
 - final status: `relayed`
+
+## Ledger Speculos smoke proof
+
+This repository includes a standalone Ledger proof script:
+
+- `scripts/ledger-speculos-smoke.mjs`
+
+The script:
+
+1. builds a deterministic approval payload (`HECATE_APPROVAL_V1|...`)
+2. requests signature from Ledger Ethereum app through Speculos
+3. recovers signer address from signature
+4. verifies recovered vs expected address
+5. writes proof artifact to `artifacts/ledger-proof.json`
+
+### Runtime requirements
+
+- Node.js 18+
+- Docker/Podman
+- Speculos container with Ethereum app ELF mounted
+- Speculos APDU and button ports exposed
+
+### 1) Start Speculos (example)
+
+```bash
+podman run --rm -it \
+  -p 40000:40000 \
+  -p 5001:5001 \
+  -v "$PWD/.speculos/apps:/speculos/apps:Z" \
+  docker.io/ledgerhq/speculos \
+  --display headless \
+  --model nanos \
+  --seed "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about" \
+  --apdu-port 40000 \
+  --button-port 5001 \
+  /speculos/apps/ethereum.elf
+```
+
+Notes:
+- `ethereum.elf` must exist in `.speculos/apps/`.
+- Adjust model/ports/seed as needed.
+
+### 2) Set smoke env vars
+
+```bash
+export LEDGER_SPECULOS_HOST=127.0.0.1
+export LEDGER_SPECULOS_APDU_PORT=40000
+export LEDGER_SPECULOS_BUTTON_PORT=5001
+export LEDGER_DERIVATION_PATH="44'/60'/0'/0/0"
+export LEDGER_EXPECTED_ADDRESS=0x0000000000000000000000000000000000000000
+
+export LEDGER_APPROVAL_RECIPIENT="unlink1..."
+export LEDGER_APPROVAL_AMOUNT="1"
+export LEDGER_APPROVAL_TOKEN="0x7501de8ea37a21e20e6e65947d2ecab0e9f061a7"
+export LEDGER_APPROVAL_NETWORK="base-sepolia"
+export LEDGER_APPROVAL_NONCE="1"
+```
+
+### 3) Run proof script
+
+```bash
+npm install
+npm run smoke:ledger-speculos
+```
+
+### 4) Expected outputs
+
+- Console: proof write confirmation and recovered/expected address check
+- File: `artifacts/ledger-proof.json` with:
+  - `payload`
+  - `payloadHash`
+  - `signature`
+  - `recoveredAddress`
+  - `expectedAddress`
+  - `timestamp`
+  - Speculos metadata
 
 ## Development approach
 
