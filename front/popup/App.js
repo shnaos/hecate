@@ -125,6 +125,7 @@ export function PopupShell() {
   const [sendState, setSendState] = React.useState("idle");
   const [sendResult, setSendResult] = React.useState(null);
   const [sendError, setSendError] = React.useState("");
+  const [sendRuntimeDebug, setSendRuntimeDebug] = React.useState(null);
 
   const reviewReady = walletState === "unlocked";
   const parsedAmount = Number(amount);
@@ -185,6 +186,7 @@ export function PopupShell() {
     setSendState("idle");
     setSendResult(null);
     setSendError("");
+    setSendRuntimeDebug(null);
   }, [walletState, recipient, amount, probeResult]);
 
   React.useEffect(() => {
@@ -891,13 +893,34 @@ export function PopupShell() {
                         );
                         return;
                       }
+                      const runtimeRecipient = recipient.trim();
+                      const runtimeAmount = amount.trim();
                       setSendState("sending");
                       setSendError("");
+                      setSendRuntimeDebug({
+                        senderAddress: "",
+                        recipientAddress: runtimeRecipient,
+                        amount: runtimeAmount,
+                      });
                       try {
                         const transfer = await runPrivateSendViaBackground({
                           mnemonic: activeMnemonic,
-                          recipientAddress: recipient.trim(),
-                          amount: amount.trim(),
+                          recipientAddress: runtimeRecipient,
+                          amount: runtimeAmount,
+                        });
+                        setSendRuntimeDebug({
+                          senderAddress:
+                            transfer && typeof transfer.senderAddress === "string"
+                              ? transfer.senderAddress
+                              : "",
+                          recipientAddress:
+                            transfer && typeof transfer.recipientAddress === "string"
+                              ? transfer.recipientAddress
+                              : runtimeRecipient,
+                          amount:
+                            transfer && typeof transfer.amount === "string"
+                              ? transfer.amount
+                              : runtimeAmount,
                         });
                         setSendResult(
                           createPrivateSendResult({
@@ -910,6 +933,31 @@ export function PopupShell() {
                         setSendState("sent");
                       } catch (error) {
                         setSendState("idle");
+                        const debug =
+                          error &&
+                          typeof error === "object" &&
+                          error.debug &&
+                          typeof error.debug === "object"
+                            ? error.debug
+                            : {
+                                senderAddress: "",
+                                recipientAddress: runtimeRecipient,
+                                amount: runtimeAmount,
+                              };
+                        setSendRuntimeDebug({
+                          senderAddress:
+                            typeof debug.senderAddress === "string"
+                              ? debug.senderAddress
+                              : "",
+                          recipientAddress:
+                            typeof debug.recipientAddress === "string"
+                              ? debug.recipientAddress
+                              : runtimeRecipient,
+                          amount:
+                            typeof debug.amount === "string"
+                              ? debug.amount
+                              : runtimeAmount,
+                        });
                         setSendError(
                           error instanceof Error
                             ? error.message
@@ -945,6 +993,26 @@ export function PopupShell() {
           : null,
         sendError
           ? h("p", { className: "auth-error", key: "send-error" }, sendError)
+          : null,
+        sendRuntimeDebug
+          ? h("div", { className: "stage-placeholder", key: "runtime-debug" }, [
+              h("p", { className: "review-block-title", key: "title" }, "Runtime debug"),
+              h(
+                "p",
+                { className: "review-note", key: "sender" },
+                `Sender unlink address used: ${sendRuntimeDebug.senderAddress || "Not available"}`,
+              ),
+              h(
+                "p",
+                { className: "review-note", key: "recipient" },
+                `Recipient unlink address used: ${sendRuntimeDebug.recipientAddress || "Not available"}`,
+              ),
+              h(
+                "p",
+                { className: "review-note", key: "amount" },
+                `Amount sent to runtime: ${sendRuntimeDebug.amount || "Not available"}`,
+              ),
+            ])
           : null,
         sendResult
           ? h("div", { className: "result-box", key: "result" }, [

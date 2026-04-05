@@ -51,9 +51,15 @@ export async function runPrivateSendViaBackground({
         if (response.error && typeof response.error.code === "string") {
           error.code = response.error.code;
         }
+        if (
+          response.error &&
+          typeof response.error.debug === "object" &&
+          response.error.debug
+        ) {
+          error.debug = response.error.debug;
+        }
         reject(error);
       },
     );
   });
 }
-

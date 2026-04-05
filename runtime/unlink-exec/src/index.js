@@ -1,4 +1,9 @@
 import { createUnlink, unlinkAccount } from "@unlink-xyz/sdk";
+import { Buffer as BufferPolyfill } from "buffer";
+
+if (typeof globalThis.Buffer === "undefined") {
+  globalThis.Buffer = BufferPolyfill;
+}
 
 const UNLINK_CONFIG = {
   engineUrl: __HECATE_UNLINK_ENGINE_URL__,
@@ -57,23 +62,39 @@ export async function executeUnlinkPrivateTransfer(input) {
     }),
   });
 
+  const senderAddress = await unlink.getAddress();
+  console.info("[hecate/unlink] Sender unlink address:", senderAddress);
+
   await unlink.ensureRegistered();
 
-  const submitted = await unlink.transfer({
-    token: UNLINK_CONFIG.token,
-    amount: transferInput.amount,
-    recipientAddress: transferInput.recipientAddress,
-  });
+  try {
+    const submitted = await unlink.transfer({
+      token: UNLINK_CONFIG.token,
+      amount: transferInput.amount,
+      recipientAddress: transferInput.recipientAddress,
+    });
 
-  const finalStatus = await unlink.pollTransactionStatus(submitted.txId, {
-    intervalMs: UNLINK_CONFIG.pollIntervalMs,
-    timeoutMs: UNLINK_CONFIG.pollTimeoutMs,
-  });
+    const finalStatus = await unlink.pollTransactionStatus(submitted.txId, {
+      intervalMs: UNLINK_CONFIG.pollIntervalMs,
+      timeoutMs: UNLINK_CONFIG.pollTimeoutMs,
+    });
 
-  return {
-    txId: finalStatus.txId,
-    status: finalStatus.status,
-    route: "Private",
-  };
+    return {
+      txId: finalStatus.txId,
+      status: finalStatus.status,
+      route: "Private",
+      senderAddress,
+      recipientAddress: transferInput.recipientAddress,
+      amount: transferInput.amount,
+    };
+  } catch (error) {
+    if (error && typeof error === "object") {
+      error.hecateDebug = {
+        senderAddress,
+        recipientAddress: transferInput.recipientAddress,
+        amount: transferInput.amount,
+      };
+    }
+    throw error;
+  }
 }
-

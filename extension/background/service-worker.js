@@ -14,7 +14,24 @@ function normalizeError(error) {
       typeof error.message === "string"
         ? error.message
         : "Unlink execution failed";
-    return { code, message };
+    const debug =
+      error.hecateDebug && typeof error.hecateDebug === "object"
+        ? {
+            senderAddress:
+              typeof error.hecateDebug.senderAddress === "string"
+                ? error.hecateDebug.senderAddress
+                : "",
+            recipientAddress:
+              typeof error.hecateDebug.recipientAddress === "string"
+                ? error.hecateDebug.recipientAddress
+                : "",
+            amount:
+              typeof error.hecateDebug.amount === "string"
+                ? error.hecateDebug.amount
+                : "",
+          }
+        : null;
+    return debug ? { code, message, debug } : { code, message };
   }
   return {
     code: "UNLINK_EXECUTION_ERROR",
@@ -45,4 +62,3 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   return true;
 });
-
